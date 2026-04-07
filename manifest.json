@@ -1,0 +1,22 @@
+{
+  "name": "VW e-up! Dashboard",
+  "short_name": "e-up!",
+  "description": "Dashboard personal VW e-up! 2014",
+  "start_url": "/eup-dashboard/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
