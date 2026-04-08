@@ -1,22 +1,498 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>⚡ VW e-up! Dashboard</title>
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-title" content="e-up!" />
-  <link rel="manifest" href="manifest.json" />
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { background: #0f172a; color: #f1f5f9; font-family: system-ui, sans-serif; }
-    #root { max-width: 480px; margin: 0 auto; }
-  </style>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>⚡ VW e-up! Dashboard</title>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-title" content="e-up!"/>
+<link rel="manifest" href="manifest.json"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0f172a;color:#f1f5f9;font-family:system-ui,sans-serif}
+#root{max-width:480px;margin:0 auto;padding-bottom:70px}
+input,button{font-family:inherit}
+</style>
 </head>
 <body>
-  <div id="root"></div>
-  <script src="app.js"></script>
+<div id="root"></div>
+<script>
+const {useState,useEffect,useRef,useCallback} = React;
+const e = React.createElement;
+
+const API = "https://script.google.com/macros/s/AKfycbxmY4q36pwRZyZM-cEAEWNTChhKcXVlLB61avSQTkrtp42MHuX7fim20SpF8FSPR4ir/exec";
+const BAT = 16, RANGE = 133;
+const tod = () => new Date().toLocaleDateString("es-ES");
+const gBC = p => p>=60?"#22c55e":p>=30?"#f59e0b":"#ef4444";
+
+const MODES = [
+  {id:"eco",label:"ECO",color:"#22c55e"},
+  {id:"normal",label:"Normal",color:"#3b82f6"},
+  {id:"sport",label:"Rapido",color:"#ef4444"},
+];
+const CLOCS = [
+  {id:"none",label:"Sin carga",color:"#475569"},
+  {id:"home",label:"Casa",color:"#3b82f6"},
+  {id:"work",label:"Trabajo",color:"#a78bfa"},
+  {id:"public",label:"Publico",color:"#f59e0b"},
+];
+const SEASONS = [
+  {id:"invierno",label:"Invierno",color:"#60a5fa",months:[12,1,2],rangeEst:"75-95 km"},
+  {id:"primavera",label:"Primavera",color:"#34d399",months:[3,4,5],rangeEst:"100-115 km"},
+  {id:"verano",label:"Verano",color:"#fbbf24",months:[6,7,8],rangeEst:"105-120 km"},
+  {id:"otono",label:"Otono",color:"#f97316",months:[9,10,11],rangeEst:"95-110 km"},
+];
+
+const getSeason = () => {
+  const m = new Date().getMonth()+1;
+  return SEASONS.find(s=>s.months.includes(m))?.id||"primavera";
+};
+
+async function apiGet(){
+  const r = await fetch(API+"?action=getAll");
+  return r.json();
+}
+async function apiPost(action,data){
+  const r = await fetch(API,{method:"POST",body:JSON.stringify({action,data})});
+  return r.json();
+}
+
+const iS = {background:"#0f172a",border:"1px solid #334155",borderRadius:"8px",color:"#f1f5f9",padding:"8px 12px",width:"100%",fontSize:"14px",boxSizing:"border-box"};
+const bP = {background:"#3b82f6",color:"#fff",border:"none",borderRadius:"8px",padding:"10px 16px",cursor:"pointer",fontWeight:"600",fontSize:"14px",width:"100%"};
+
+function App(){
+  const [regs,setRegs] = useState([]);
+  const [sohs,setSohs] = useState([]);
+  const [bat,setBat] = useState(85);
+  const [tab,setTab] = useState("home");
+  const [status,setStatus] = useState("loading"); // loading|ok|error
+  const [syncing,setSyncing] = useState(false);
+  const [toast,setToast] = useState(null);
+  const [dayF,setDayF] = useState({date:tod(),s:"",e:"",km:"",mode:"eco",loc:"none",season:getSeason()});
+  const [editId,setEditId] = useState(null);
+  const [degF,setDegF] = useState({range:"",date:tod(),notes:""});
+  const [zone,setZone] = useState("Sueca");
+  const [selSt,setSelSt] = useState(null);
+  const [aiMsgs,setAiMsgs] = useState([{r:"a",t:"Hola Paola! Soy tu asistente del VW e-up! 2014. Tus datos se guardan en Google Sheets."}]);
+  const [aiIn,setAiIn] = useState("");
+  const [aiLoad,setAiLoad] = useState(false);
+  const chatRef = useRef(null);
+
+  useEffect(()=>{if(chatRef.current)chatRef.current.scrollTop=chatRef.current.scrollHeight;},[aiMsgs]);
+
+  const showToast = (msg,ok=true)=>{setToast({msg,ok});setTimeout(()=>setToast(null),3000);};
+
+  const load = useCallback(async()=>{
+    setStatus("loading");
+    try{
+      const d = await apiGet();
+      if(!d.ok) throw new Error();
+      setRegs((d.registros||[]).sort((a,b)=>b.id-a.id));
+      setSohs((d.soh||[]).sort((a,b)=>b.id-a.id));
+      if(d.config?.bateria_actual) setBat(+d.config.bateria_actual);
+      setStatus("ok");
+    }catch{setStatus("error");}
+  },[]);
+
+  useEffect(()=>{load();},[]);
+
+  const saveBat = async v=>{
+    setBat(v);
+    try{await apiPost("saveConfig",{clave:"bateria_actual",valor:String(v)});}catch{}
+  };
+
+  const saveDay = async()=>{
+    if(!dayF.s||!dayF.e||!dayF.km){showToast("Rellena todos los campos",false);return;}
+    setSyncing(true);
+    const cons = ((((+dayF.s-+dayF.e)/100)*BAT)/+dayF.km*100).toFixed(1);
+    const payload = {fecha:dayF.date,bateria_salida:+dayF.s,bateria_llegada:+dayF.e,km:+dayF.km,consumo:+cons,modo:dayF.mode,carga:dayF.loc,temporada:dayF.season};
+    try{
+      let res;
+      if(editId){
+        await apiPost("updateRegistro",{id:editId,...payload});
+        setRegs(r=>r.map(x=>x.id===editId?{...x,...payload,id:editId}:x));
+        setEditId(null);
+        showToast("Registro actualizado");
+      }else{
+        res = await apiPost("saveRegistro",payload);
+        if(!res.ok) throw new Error();
+        setRegs(r=>[{id:res.id,...payload},...r]);
+        showToast("Guardado en Google Sheets");
+      }
+      await saveBat(+dayF.e);
+      setDayF({date:tod(),s:"",e:"",km:"",mode:"eco",loc:"none",season:getSeason()});
+    }catch{showToast("Error al guardar",false);}
+    setSyncing(false);
+  };
+
+  const delReg = async id=>{
+    setSyncing(true);
+    try{await apiPost("deleteRegistro",{id});setRegs(r=>r.filter(x=>x.id!==id));showToast("Eliminado");}
+    catch{showToast("Error",false);}
+    setSyncing(false);
+  };
+
+  const editReg = log=>{
+    setDayF({date:log.fecha,s:String(log.bateria_salida),e:String(log.bateria_llegada),km:String(log.km),mode:log.modo,loc:log.carga,season:log.temporada||getSeason()});
+    setEditId(log.id);setTab("diary");window.scrollTo(0,0);
+  };
+
+  const saveDeg = async()=>{
+    if(!degF.range){showToast("Introduce la autonomia real",false);return;}
+    setSyncing(true);
+    const soh = ((+degF.range/RANGE)*100).toFixed(1);
+    const kwh = ((+degF.range/RANGE)*BAT).toFixed(2);
+    try{
+      const res = await apiPost("saveSOH",{fecha:degF.date,autonomia_real:+degF.range,soh:+soh,kwh_usables:+kwh,notas:degF.notes});
+      if(!res.ok) throw new Error();
+      setSohs(s=>[{id:res.id,fecha:degF.date,autonomia_real:+degF.range,soh:+soh,kwh_usables:+kwh,notas:degF.notes},...s]);
+      setDegF({range:"",date:tod(),notes:""});
+      showToast("SOH guardado");
+    }catch{showToast("Error al guardar SOH",false);}
+    setSyncing(false);
+  };
+
+  const sendAI = async()=>{
+    if(!aiIn.trim()||aiLoad) return;
+    const msg = aiIn.trim();setAiIn("");
+    const msgs = [...aiMsgs,{r:"u",t:msg}];
+    setAiMsgs(msgs);setAiLoad(true);
+    const ac = regs.length?(regs.reduce((s,l)=>s+(+l.consumo),0)/regs.length).toFixed(1):"15.5";
+    const ld = sohs[0];
+    const sys = `Eres experto en VE y asistente del VW e-up! 2014 de Paola. DATOS: Bateria 16kWh | Autonomia 133km | SOH:${ld?ld.soh+"%":"no medido"} | Consumo:${ac}kWh/100km | Bateria actual:${bat}% | Registros:${regs.length} | Km:${regs.reduce((s,l)=>s+(+l.km),0)} | Uso:120km/dia L-V | Zona Sueca-Valencia. Responde en espanol, max 3 parrafos cortos.`;
+    try{
+      const r = await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,system:sys,messages:msgs.map(m=>({role:m.r==="u"?"user":"assistant",content:m.t}))})});
+      const d = await r.json();
+      setAiMsgs([...msgs,{r:"a",t:d.content?.map(c=>c.text||"").join("")||"Error."}]);
+    }catch{setAiMsgs([...msgs,{r:"a",t:"No se pudo conectar."}]);}
+    setAiLoad(false);
+  };
+
+  const bC = gBC(bat);
+  const eR = Math.round((bat/100)*112);
+  const aK = ((bat/100)*BAT).toFixed(1);
+  const aC = regs.length?(regs.reduce((s,l)=>s+(+l.consumo),0)/regs.length).toFixed(1):"--";
+  const ld = sohs[0];
+  const soh = ld?ld.soh:null;
+  const sC = soh>=85?"#22c55e":soh>=70?"#f59e0b":"#ef4444";
+  const pC = dayF.s&&dayF.e&&dayF.km?((((+dayF.s-+dayF.e)/100)*BAT)/+dayF.km*100).toFixed(1):null;
+  const TABS = [["home","Inicio"],["diary","Diario"],["battery","Bateria"],["map","Cargadores"],["advisor","IA"],["stats","Stats"]];
+
+  if(status==="loading") return e("div",{style:{background:"#0f172a",minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",color:"#f1f5f9"}},
+    e("div",{style:{fontSize:"48px",marginBottom:"16px"}},"⚡"),
+    e("div",{style:{fontWeight:"700",fontSize:"18px",marginBottom:"8px"}},"Cargando tus datos..."),
+    e("div",{style:{color:"#94a3b8",fontSize:"13px"}},"Conectando con Google Sheets")
+  );
+
+  if(status==="error") return e("div",{style:{background:"#0f172a",minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",padding:"24px"}},
+    e("div",{style:{background:"#1e293b",borderRadius:"16px",padding:"24px",textAlign:"center",maxWidth:"360px"}},
+      e("div",{style:{fontSize:"40px",marginBottom:"12px"}},"📡"),
+      e("div",{style:{fontWeight:"700",fontSize:"16px",marginBottom:"8px",color:"#fca5a5"}},"Sin conexion con Sheets"),
+      e("div",{style:{color:"#94a3b8",fontSize:"13px",marginBottom:"20px"}},"Comprueba tu conexion a internet."),
+      e("button",{style:bP,onClick:load},"Reintentar")
+    )
+  );
+
+  const card = (children,style={}) => e("div",{style:{background:"#1e293b",borderRadius:"16px",padding:"18px",marginBottom:"14px",...style}},children);
+  const lbl = text => e("label",{style:{fontSize:"12px",color:"#94a3b8",display:"block",marginBottom:"4px"}},text);
+  const row = (label,value,color="#f1f5f9") => e("div",{style:{display:"flex",justifyContent:"space-between",padding:"6px 0",borderBottom:"1px solid #334155",fontSize:"13px"}},
+    e("span",{style:{color:"#94a3b8",flexShrink:0,marginRight:"8px"}},label),
+    e("span",{style:{fontWeight:"600",color}},value)
+  );
+
+  return e("div",{style:{background:"#0f172a",minHeight:"100vh",color:"#f1f5f9",fontFamily:"system-ui,sans-serif",maxWidth:"480px",margin:"0 auto",paddingBottom:"70px"}},
+
+    toast && e("div",{style:{position:"fixed",top:"16px",left:"50%",transform:"translateX(-50%)",zIndex:9999,background:toast.ok?"#14532d":"#7f1d1d",border:`1px solid ${toast.ok?"#22c55e":"#ef4444"}`,color:"#fff",borderRadius:"10px",padding:"10px 20px",fontSize:"13px",fontWeight:"600",whiteSpace:"nowrap"}},toast.msg),
+
+    e("div",{style:{padding:"16px 16px 0",display:"flex",alignItems:"center",justifyContent:"space-between"}},
+      e("div",{style:{display:"flex",alignItems:"center",gap:"10px"}},
+        e("span",{style:{fontSize:"26px"}},"⚡"),
+        e("div",null,
+          e("div",{style:{fontWeight:"700",fontSize:"16px"}},"VW e-up! 2014"),
+          e("div",{style:{color:"#94a3b8",fontSize:"11px"}},regs.length+" registros · "+regs.reduce((s,l)=>s+(+l.km),0)+" km"+(syncing?" · Guardando...":""))
+        )
+      ),
+      e("div",{style:{display:"flex",gap:"8px",alignItems:"center"}},
+        e("div",{style:{background:"#14532d",border:"1px solid #22c55e",borderRadius:"8px",padding:"4px 10px",fontSize:"11px",color:"#22c55e",fontWeight:"600"}},"Sheets OK"),
+        e("button",{onClick:load,style:{background:"#1e293b",border:"1px solid #334155",borderRadius:"8px",padding:"4px 10px",fontSize:"11px",color:"#94a3b8",cursor:"pointer"}},"Recargar")
+      )
+    ),
+
+    e("div",{style:{display:"flex",margin:"12px 16px 0",background:"#1e293b",borderRadius:"10px",padding:"3px",gap:"2px",overflowX:"auto"}},
+      TABS.map(([id,lbl2])=>e("button",{key:id,onClick:()=>setTab(id),style:{flex:"0 0 auto",padding:"7px 10px",border:"none",borderRadius:"7px",cursor:"pointer",fontSize:"11px",fontWeight:"600",whiteSpace:"nowrap",background:tab===id?"#3b82f6":"transparent",color:tab===id?"#fff":"#94a3b8"}},lbl2))
+    ),
+
+    e("div",{style:{padding:"16px"}},
+
+      tab==="home" && e("div",null,
+        card([
+          e("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"10px"}},
+            e("span",{style:{color:"#94a3b8",fontSize:"13px"}},"Bateria actual"),
+            e("span",{style:{color:bC,fontWeight:"800",fontSize:"32px"}},bat+"%")
+          ),
+          e("div",{style:{background:"#0f172a",borderRadius:"8px",height:"20px",overflow:"hidden",marginBottom:"12px"}},
+            e("div",{style:{width:`${bat}%`,height:"100%",background:`linear-gradient(90deg,${bC}88,${bC})`,borderRadius:"8px",transition:"width .4s"}})
+          ),
+          e("div",{style:{display:"flex",gap:"5px",flexWrap:"wrap"}},
+            [10,20,25,30,40,50,60,70,80,85,90,100].map(v=>e("button",{key:v,onClick:()=>saveBat(v),style:{padding:"4px 9px",borderRadius:"6px",border:"none",cursor:"pointer",fontSize:"12px",fontWeight:"600",background:bat===v?bC:"#334155",color:bat===v?"#fff":"#94a3b8"}},v+"%"))
+          )
+        ]),
+        e("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"10px",marginBottom:"14px"}},
+          [["Autonomia real",eR+" km","#22c55e"],["kWh disponibles",aK+" kWh","#f59e0b"],["Consumo medio",aC!=="--"?aC+" kWh/100":"Sin datos","#a78bfa"],["SOH bateria",soh?soh+"%":"No medido",soh?sC:"#475569"]].map(([l,v,c])=>
+            e("div",{key:l,style:{background:"#1e293b",borderRadius:"14px",padding:"14px",textAlign:"center"}},
+              e("div",{style:{color:"#94a3b8",fontSize:"11px",marginBottom:"4px"}},l),
+              e("div",{style:{fontSize:"19px",fontWeight:"700",color:c}},v)
+            )
+          )
+        ),
+        e("div",{style:{background:bat>=55?"#14532d":"#7f1d1d",border:`1px solid ${bat>=55?"#22c55e":"#ef4444"}`,borderRadius:"12px",padding:"14px",textAlign:"center",marginBottom:"14px"}},
+          e("div",{style:{fontWeight:"700"}},bat>=55?"OK para trayecto diario (120 km)":"Bateria insuficiente para 120 km"),
+          e("div",{style:{color:"#94a3b8",fontSize:"12px",marginTop:"4px"}},"Minimo 55% · Actual "+bat+"%")
+        ),
+        regs[0] && card([
+          e("div",{style:{fontWeight:"700",marginBottom:"10px",fontSize:"14px"}},"Ultimo registro — "+regs[0].fecha),
+          e("div",{style:{display:"flex"}},
+            [["Bateria",`${regs[0].bateria_salida}%→${regs[0].bateria_llegada}%`,"#3b82f6"],["Km",regs[0].km,"#22c55e"],["kWh/100",regs[0].consumo,regs[0].consumo>18?"#ef4444":regs[0].consumo>15?"#f59e0b":"#22c55e"]].map(([l,v,c])=>
+              e("div",{key:l,style:{flex:1,textAlign:"center"}},
+                e("div",{style:{fontWeight:"700",color:c,fontSize:"13px"}},v),
+                e("div",{style:{fontSize:"10px",color:"#64748b"}},l)
+              )
+            )
+          )
+        ]),
+        e("div",{style:{background:"#14532d",border:"1px solid #22c55e",borderRadius:"12px",padding:"12px",display:"flex",alignItems:"center",gap:"10px"}},
+          e("span",{style:{fontSize:"20px"}},"☁️"),
+          e("div",null,
+            e("div",{style:{fontWeight:"600",fontSize:"13px"}},"Datos guardados automaticamente"),
+            e("div",{style:{color:"#94a3b8",fontSize:"12px"}},"Sincronizado con Google Sheets")
+          )
+        )
+      ),
+
+      tab==="diary" && e("div",null,
+        card([
+          e("div",{style:{fontWeight:"700",marginBottom:"14px"}},editId?"Editando registro":"Registro del trayecto"),
+          lbl("Fecha"),
+          e("input",{style:{...iS,marginBottom:"10px"},value:dayF.date,onInput:ev=>setDayF(f=>({...f,date:ev.target.value}))}),
+          e("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"10px",marginBottom:"10px"}},
+            e("div",null,lbl("% Bateria al salir"),e("input",{style:iS,type:"number",placeholder:"85",value:dayF.s,onInput:ev=>setDayF(f=>({...f,s:ev.target.value}))})),
+            e("div",null,lbl("% Bateria al llegar"),e("input",{style:iS,type:"number",placeholder:"25",value:dayF.e,onInput:ev=>setDayF(f=>({...f,e:ev.target.value}))}))
+          ),
+          lbl("Kilometros"),
+          e("input",{style:{...iS,marginBottom:"10px"},type:"number",placeholder:"60 ida / 120 dia completo",value:dayF.km,onInput:ev=>setDayF(f=>({...f,km:ev.target.value}))}),
+          lbl("Temporada"),
+          e("div",{style:{display:"flex",gap:"6px",flexWrap:"wrap",marginBottom:"10px"}},
+            SEASONS.map(s=>e("button",{key:s.id,onClick:()=>setDayF(f=>({...f,season:s.id})),style:{flex:1,padding:"8px 4px",borderRadius:"8px",border:"none",cursor:"pointer",fontSize:"11px",fontWeight:"600",minWidth:"70px",background:dayF.season===s.id?s.color:"#334155",color:dayF.season===s.id?"#0f172a":"#94a3b8"}},s.label))
+          ),
+          lbl("Modo de conduccion"),
+          e("div",{style:{display:"flex",gap:"8px",marginBottom:"10px"}},
+            MODES.map(m=>e("button",{key:m.id,onClick:()=>setDayF(f=>({...f,mode:m.id})),style:{flex:1,padding:"9px 4px",borderRadius:"8px",border:"none",cursor:"pointer",fontSize:"12px",fontWeight:"600",background:dayF.mode===m.id?m.color:"#334155",color:dayF.mode===m.id?"#fff":"#94a3b8"}},m.label))
+          ),
+          lbl("Donde cargue?"),
+          e("div",{style:{display:"flex",gap:"6px",flexWrap:"wrap",marginBottom:"12px"}},
+            CLOCS.map(l=>e("button",{key:l.id,onClick:()=>setDayF(f=>({...f,loc:l.id})),style:{flex:1,padding:"8px 4px",borderRadius:"8px",border:"none",cursor:"pointer",fontSize:"11px",fontWeight:"600",minWidth:"58px",background:dayF.loc===l.id?l.color:"#334155",color:dayF.loc===l.id?"#fff":"#94a3b8"}},l.label))
+          ),
+          pC && e("div",{style:{background:"#0f172a",borderRadius:"8px",padding:"10px",marginBottom:"12px",display:"flex",justifyContent:"space-between",fontSize:"13px"}},
+            e("span",{style:{color:"#94a3b8"}},"Consumo estimado"),
+            e("span",{style:{fontWeight:"700",color:+pC>18?"#ef4444":+pC>15?"#f59e0b":"#22c55e"}},pC+" kWh/100km")
+          ),
+          e("div",{style:{display:"flex",gap:"8px"}},
+            e("button",{style:{...bP,background:syncing?"#334155":"#3b82f6"},onClick:saveDay,disabled:syncing},syncing?"Guardando...":"Guardar en Sheets"),
+            editId && e("button",{onClick:()=>{setEditId(null);setDayF({date:tod(),s:"",e:"",km:"",mode:"eco",loc:"none",season:getSeason()});},style:{...bP,background:"#334155",width:"auto",padding:"10px 14px"}},"X")
+          )
+        ]),
+        regs.length===0
+          ? e("div",{style:{textAlign:"center",color:"#475569",padding:"30px"}},"Sin registros aun.")
+          : card([
+            e("div",{style:{fontWeight:"700",marginBottom:"14px"}},"Historial — "+regs.length+" registros"),
+            regs.map(log=>{
+              const m=MODES.find(md=>md.id===log.modo)||MODES[1];
+              const lc=CLOCS.find(c=>c.id===log.carga)||CLOCS[0];
+              const cc=log.consumo>18?"#ef4444":log.consumo>15?"#f59e0b":"#22c55e";
+              return e("div",{key:log.id,style:{borderBottom:"1px solid #334155",paddingBottom:"12px",marginBottom:"12px"}},
+                e("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"6px"}},
+                  e("span",{style:{fontWeight:"700"}},log.fecha+" · "+log.km+" km"),
+                  e("div",{style:{display:"flex",gap:"5px"}},
+                    e("span",{style:{background:m.color+"33",color:m.color,borderRadius:"6px",padding:"2px 7px",fontSize:"11px",fontWeight:"600"}},m.label),
+                    e("button",{onClick:()=>editReg(log),style:{background:"#334155",border:"none",borderRadius:"6px",color:"#94a3b8",cursor:"pointer",padding:"3px 7px",fontSize:"11px"}},"✏"),
+                    e("button",{onClick:()=>delReg(log.id),style:{background:"#7f1d1d",border:"none",borderRadius:"6px",color:"#fca5a5",cursor:"pointer",padding:"3px 7px",fontSize:"11px"}},"X")
+                  )
+                ),
+                e("div",{style:{display:"flex"}},
+                  [["Bateria",`${log.bateria_salida}%→${log.bateria_llegada}%`,"#3b82f6"],["kWh/100",log.consumo,cc],["Carga",lc.label,lc.color]].map(([l,v,c])=>
+                    e("div",{key:l,style:{flex:1,textAlign:"center"}},
+                      e("div",{style:{fontWeight:"700",color:c,fontSize:"13px"}},v),
+                      e("div",{style:{fontSize:"10px",color:"#64748b"}},l)
+                    )
+                  )
+                )
+              );
+            })
+          ])
+      ),
+
+      tab==="battery" && e("div",null,
+        card([
+          e("div",{style:{fontWeight:"700",marginBottom:"6px"}},"Salud de la bateria (SOH)"),
+          e("div",{style:{color:"#94a3b8",fontSize:"12px",marginBottom:"14px"}},"Carga al 100% y anota cuantos km reales alcanzas hasta llegar a 0%."),
+          soh ? e("div",null,
+            e("div",{style:{textAlign:"center",marginBottom:"16px"}},
+              e("div",{style:{fontSize:"54px",fontWeight:"800",color:sC}},soh+"%"),
+              e("div",{style:{color:"#94a3b8",fontSize:"13px"}},"Estado de salud estimado"),
+              e("div",{style:{fontSize:"13px",marginTop:"4px"}},"~"+ld.kwh_usables+" kWh · "+ld.autonomia_real+" km reales"),
+              e("div",{style:{marginTop:"8px",background:"#0f172a",borderRadius:"8px",padding:"8px",fontSize:"12px"}},
+                soh>=85?"Bateria en buen estado":soh>=70?"Degradacion moderada.":"Degradacion severa. Consulta taller."
+              )
+            ),
+            e("div",{style:{position:"relative",marginBottom:"8px"}},
+              e("div",{style:{background:"#0f172a",borderRadius:"8px",height:"20px",overflow:"hidden"}},
+                e("div",{style:{width:`${soh}%`,height:"100%",background:`linear-gradient(90deg,${sC}88,${sC})`,borderRadius:"8px"}})
+              ),
+              [70,85].map(mk=>e("div",{key:mk,style:{position:"absolute",left:`${mk}%`,top:0,bottom:0,width:"2px",background:"#475569"}}))
+            )
+          ) : e("div",{style:{textAlign:"center",padding:"16px",color:"#475569",fontSize:"13px"}},"Sin mediciones. Registra la primera abajo.")
+        ]),
+        card([
+          e("div",{style:{fontWeight:"700",marginBottom:"14px"}},"Nueva medicion SOH"),
+          lbl("Autonomia real (km de 100% a 0%)"),
+          e("input",{style:{...iS,marginBottom:"10px"},type:"number",placeholder:"Ej: 105",value:degF.range,onInput:ev=>setDegF(f=>({...f,range:ev.target.value}))}),
+          lbl("Fecha"),
+          e("input",{style:{...iS,marginBottom:"10px"},value:degF.date,onInput:ev=>setDegF(f=>({...f,date:ev.target.value}))}),
+          lbl("Condiciones"),
+          e("input",{style:{...iS,marginBottom:"12px"},placeholder:"Ej: primavera, autopista",value:degF.notes,onInput:ev=>setDegF(f=>({...f,notes:ev.target.value}))}),
+          degF.range && e("div",{style:{background:"#0f172a",borderRadius:"8px",padding:"10px",marginBottom:"12px",display:"flex",justifyContent:"space-between",fontSize:"13px"}},
+            e("span",{style:{color:"#94a3b8"}},"SOH a registrar"),
+            e("span",{style:{fontWeight:"700",color:"#22c55e"}},((+degF.range/RANGE)*100).toFixed(1)+"%")
+          ),
+          e("button",{style:{...bP,background:syncing?"#334155":"#3b82f6"},onClick:saveDeg,disabled:syncing},syncing?"Guardando...":"Guardar medicion")
+        ]),
+        sohs.length>0 && card([
+          e("div",{style:{fontWeight:"700",marginBottom:"12px"}},"Historial SOH"),
+          sohs.map(d=>e("div",{key:d.id,style:{borderBottom:"1px solid #334155",paddingBottom:"10px",marginBottom:"10px"}},
+            e("div",{style:{display:"flex",justifyContent:"space-between"}},
+              e("span",{style:{fontWeight:"600",color:d.soh>=85?"#22c55e":d.soh>=70?"#f59e0b":"#ef4444"}},"SOH "+d.soh+"%"),
+              e("span",{style:{color:"#94a3b8",fontSize:"12px"}},d.fecha)
+            ),
+            e("div",{style:{fontSize:"12px",color:"#94a3b8"}},d.autonomia_real+" km · "+d.kwh_usables+" kWh"+(d.notas?" · "+d.notas:""))
+          ))
+        ])
+      ),
+
+      tab==="map" && e("div",null,
+        e("div",{style:{fontWeight:"700",fontSize:"15px",marginBottom:"6px"}},"Puntos de carga — C. Valenciana"),
+        e("div",{style:{display:"flex",gap:"6px",flexWrap:"wrap",marginBottom:"12px"}},
+          [["all","Todos"],["Sueca","Sueca"],["Puzol","Puzol"],["Sagunto","Sagunto"],["Valencia","Valencia"],["ok","Activos"]].map(([id,lbl2])=>
+            e("button",{key:id,onClick:()=>{setZone(id);setSelSt(null);},style:{padding:"5px 11px",borderRadius:"20px",border:"1px solid #334155",background:zone===id?"#3b82f6":"transparent",color:zone===id?"#fff":"#94a3b8",cursor:"pointer",fontSize:"11px",fontWeight:"600"}},lbl2)
+          )
+        ),
+        [
+          {name:"PowerGo",addr:"C/ Arnau de Vilanova 7, Sueca",zone:"Sueca",rating:2.5,status:"warning",notes:"Conector CCS en mal estado.",conn:"CCS, CHAdeMO",lat:39.2062724,lng:-0.3053043},
+          {name:"Cargador Municipal",addr:"Ronda Bernat Alino 57, Sueca",zone:"Sueca",rating:3.0,status:"ok",notes:"Funciona bien.",conn:"CCS, Type 2",lat:39.2037416,lng:-0.3076841},
+          {name:"Fenide Energia",addr:"Placa Ajuntament 10, Sueca",zone:"Sueca",rating:2.3,status:"warning",notes:"Averias frecuentes.",conn:"Type 2",lat:39.2026217,lng:-0.3104931},
+          {name:"Iberdrola Sueca",addr:"Av. Gandient 3, Sueca",zone:"Sueca",rating:null,status:"unknown",notes:"Sin valoraciones.",conn:"Type 2, CCS",lat:39.2044050,lng:-0.316332},
+          {name:"Iberdrola bp pulse Puzol",addr:"Ctra. Barcelona 44, Puzol",zone:"Puzol",rating:3.7,status:"ok",notes:"Junto a Burger King y Mercadona.",conn:"CCS, CHAdeMO",lat:39.623219,lng:-0.304116},
+          {name:"Umbrella Charging Puzol",addr:"Carrer Tarongers, Puzol",zone:"Puzol",rating:5.0,status:"ok",notes:"Mejor valorado de Puzol.",conn:"CCS, Type 2",lat:39.6245924,lng:-0.3040361},
+          {name:"EDP ES Sagunto",addr:"Av. Les Moreres, Sagunto",zone:"Sagunto",rating:3.9,status:"ok",notes:"Mejor valorado de Sagunto.",conn:"CCS, Type 2, CHAdeMO",lat:39.674179,lng:-0.263575},
+          {name:"Iberdrola bp pulse Sagunto",addr:"C/ Periodista Azzati s/n, Sagunto",zone:"Sagunto",rating:2.8,status:"warning",notes:"Periodos fuera de servicio.",conn:"Ultra CCS",lat:39.668097,lng:-0.225118},
+          {name:"Iberdrola IGSA Valencia",addr:"C/ Prof. Beltran Baguena 4, Valencia",zone:"Valencia",rating:4.3,status:"ok",notes:"94 kW. Parking IGSA.",conn:"Ultra CCS",lat:39.4804177,lng:-0.3889125},
+          {name:"Wenea Campanar Valencia",addr:"Av. Pius XII 2, Valencia",zone:"Valencia",rating:null,status:"ok",notes:"Punto 24h.",conn:"CCS, Type 2",lat:39.4811696,lng:-0.3920164},
+          {name:"Wenea Ciutat Vella Valencia",addr:"Pl. Sant Agusti, Valencia",zone:"Valencia",rating:null,status:"ok",notes:"Centro historico.",conn:"CCS, Type 2",lat:39.4686457,lng:-0.3798529},
+          {name:"Iberdrola Roger de Lloria",addr:"C/ Roger de Lloria 10, Valencia",zone:"Valencia",rating:3.0,status:"ok",notes:"Precio varia segun metodo pago.",conn:"CCS, Type 2",lat:39.4692034,lng:-0.3746765},
+        ].filter(s=>zone==="all"?true:zone==="ok"?s.status==="ok":s.zone===zone).map((s,i)=>
+          e("div",{key:i,onClick:()=>setSelSt(selSt?.name===s.name?null:s),style:{background:"#1e293b",borderRadius:"14px",padding:"14px",marginBottom:"10px",cursor:"pointer",border:`1px solid ${selSt?.name===s.name?"#3b82f6":"#334155"}`}},
+            e("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}},
+              e("div",{style:{flex:1}},
+                e("div",{style:{display:"flex",alignItems:"center",gap:"6px",marginBottom:"3px"}},
+                  e("div",{style:{width:"10px",height:"10px",borderRadius:"50%",background:s.status==="ok"?"#22c55e":s.status==="warning"?"#ef4444":"#94a3b8",flexShrink:0}}),
+                  e("span",{style:{fontWeight:"700",fontSize:"13px"}},s.name)
+                ),
+                e("div",{style:{fontSize:"12px",color:"#94a3b8"}},s.addr)
+              ),
+              s.rating && e("span",{style:{color:"#f59e0b",fontSize:"12px",fontWeight:"600"}},"⭐ "+s.rating)
+            ),
+            selSt?.name===s.name && e("div",{style:{marginTop:"12px",borderTop:"1px solid #334155",paddingTop:"12px"}},
+              row("Conectores",s.conn),
+              row("Notas",s.notes),
+              e("a",{href:`https://www.google.com/maps/search/?api=1&query=${s.lat},${s.lng}`,target:"_blank",rel:"noopener noreferrer",style:{display:"block",background:"#3b82f6",color:"#fff",borderRadius:"8px",padding:"10px",textAlign:"center",fontWeight:"700",fontSize:"13px",textDecoration:"none",marginTop:"12px"}},"Abrir en Google Maps")
+            )
+          )
+        )
+      ),
+
+      tab==="advisor" && e("div",{style:{display:"flex",flexDirection:"column",height:"calc(100vh - 210px)"}},
+        card([
+          e("div",{style:{fontWeight:"700",fontSize:"14px",marginBottom:"4px"}},"Smart Advisor — e-up! 2014"),
+          e("div",{style:{color:"#94a3b8",fontSize:"12px"}},"Analiza tus datos reales de Google Sheets.")
+        ],{marginBottom:"10px"}),
+        e("div",{style:{display:"flex",gap:"6px",flexWrap:"wrap",marginBottom:"10px"}},
+          ["Cuanta autonomia me queda?","Consejos para ahorrar bateria","Cuando debo recargar?","Como va mi degradacion?"].map(q=>
+            e("button",{key:q,onClick:()=>setAiIn(q),style:{background:"#1e293b",border:"1px solid #334155",borderRadius:"20px",padding:"5px 10px",fontSize:"11px",color:"#93c5fd",cursor:"pointer"}},q)
+          )
+        ),
+        e("div",{ref:chatRef,style:{flex:1,overflowY:"auto",background:"#0f172a",borderRadius:"12px",padding:"12px",marginBottom:"10px",display:"flex",flexDirection:"column",gap:"10px"}},
+          aiMsgs.map((m,i)=>e("div",{key:i,style:{display:"flex",justifyContent:m.r==="u"?"flex-end":"flex-start"}},
+            e("div",{style:{maxWidth:"85%",padding:"10px 14px",borderRadius:m.r==="u"?"16px 16px 4px 16px":"16px 16px 16px 4px",background:m.r==="u"?"#3b82f6":"#1e293b",fontSize:"13px",lineHeight:"1.6"}},m.t)
+          )),
+          aiLoad && e("div",{style:{display:"flex"}},e("div",{style:{background:"#1e293b",padding:"10px 14px",borderRadius:"16px 16px 16px 4px",fontSize:"13px",color:"#94a3b8"}},"Analizando..."))
+        ),
+        e("div",{style:{display:"flex",gap:"8px"}},
+          e("input",{style:{...iS,flex:"1"},placeholder:"Pregunta sobre tu vehiculo...",value:aiIn,onInput:ev=>setAiIn(ev.target.value),onKeyDown:ev=>ev.key==="Enter"&&sendAI()}),
+          e("button",{onClick:sendAI,disabled:aiLoad,style:{background:aiLoad?"#334155":"#3b82f6",border:"none",borderRadius:"8px",padding:"0 16px",cursor:aiLoad?"not-allowed":"pointer",fontSize:"18px",color:"#fff"}},"→")
+        )
+      ),
+
+      tab==="stats" && e("div",null,
+        e("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"10px",marginBottom:"14px"}},
+          [["Registros",regs.length,"#3b82f6"],["Km totales",regs.reduce((s,l)=>s+(+l.km),0)+" km","#22c55e"],["En ECO",regs.filter(l=>l.modo==="eco").length,"#22c55e"],["SOH",soh?soh+"%":"--",soh?sC:"#475569"]].map(([l,v,c])=>
+            e("div",{key:l,style:{background:"#1e293b",borderRadius:"14px",padding:"14px",textAlign:"center"}},
+              e("div",{style:{color:"#94a3b8",fontSize:"11px",marginBottom:"4px"}},l),
+              e("div",{style:{fontSize:"20px",fontWeight:"700",color:c}},v)
+            )
+          )
+        ),
+        regs.length>0 && card([
+          e("div",{style:{fontWeight:"700",marginBottom:"12px"}},"Consumo por registro"),
+          regs.slice(0,10).map(log=>{
+            const c=log.consumo>18?"#ef4444":log.consumo>15?"#f59e0b":"#22c55e";
+            return e("div",{key:log.id,style:{marginBottom:"8px"}},
+              e("div",{style:{display:"flex",justifyContent:"space-between",fontSize:"12px",marginBottom:"3px"}},
+                e("span",{style:{color:"#94a3b8"}},log.fecha+" · "+log.km+" km"),
+                e("span",{style:{color:c,fontWeight:"700"}},log.consumo+" kWh/100")
+              ),
+              e("div",{style:{background:"#0f172a",borderRadius:"4px",height:"6px"}},
+                e("div",{style:{width:`${Math.min(log.consumo/25*100,100)}%`,height:"100%",borderRadius:"4px",background:c}})
+              )
+            );
+          })
+        ]),
+        card([
+          e("div",{style:{fontWeight:"700",marginBottom:"12px"}},"Modos de conduccion"),
+          MODES.map(m=>{
+            const cnt=regs.filter(l=>l.modo===m.id).length;
+            const pct=regs.length?Math.round(cnt/regs.length*100):0;
+            return e("div",{key:m.id,style:{marginBottom:"10px"}},
+              e("div",{style:{display:"flex",justifyContent:"space-between",fontSize:"13px",marginBottom:"3px"}},
+                e("span",{style:{color:m.color,fontWeight:"600"}},m.label),
+                e("span",{style:{color:"#94a3b8"}},cnt+" registros ("+pct+"%)")
+              ),
+              e("div",{style:{background:"#0f172a",borderRadius:"4px",height:"8px"}},
+                e("div",{style:{width:`${pct}%`,height:"100%",borderRadius:"4px",background:m.color}})
+              )
+            );
+          })
+        ])
+      )
+    ),
+
+    e("div",{style:{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:"480px",background:"#0f172a",borderTop:"1px solid #1e293b",padding:"8px 0",textAlign:"center"}},
+      e("span",{style:{fontSize:"11px",color:"#475569"}},"VW e-up! · Datos en Google Sheets")
+    )
+  );
+}
+
+ReactDOM.render(React.createElement(App,null), document.getElementById("root"));
+</script>
 </body>
 </html>
