@@ -13,24 +13,18 @@
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:#0f172a;color:#f1f5f9;font-family:system-ui,sans-serif}
 #root{max-width:480px;margin:0 auto;padding-bottom:70px}
-input,button{font-family:inherit}
+input,button,select,textarea{font-family:inherit}
 
-/* ── PANEL DE INSTRUMENTOS ── */
+/* ── PANEL ── */
 .pw{background:#0d0f14;border-radius:16px;padding:16px;color:#fff}
 .ptb{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
 .pbrand{font-size:10px;letter-spacing:3px;color:#4a9eff;text-transform:uppercase;font-weight:500}
 .pst{font-size:11px;color:#22c55e;display:flex;align-items:center;gap:5px}
 .pdot{width:7px;height:7px;border-radius:50%;background:#22c55e;display:inline-block}
-
-/* Fila top: speedo | ring | rpm */
 .ptr{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:14px}
-
-/* Velocímetro */
 .spd{display:flex;flex-direction:column;align-items:center;flex:1}
 .spd-n{font-size:34px;font-weight:500;color:#fff;line-height:1;text-align:center;margin-top:2px}
 .spd-u{font-size:10px;color:#6b7280;text-align:center}
-
-/* Anillo batería */
 .brw{position:relative;width:136px;height:136px;flex-shrink:0}
 .brw svg{width:136px;height:136px}
 .bov{position:absolute;top:50%;left:50%;transform:translate(-50%,-54%);text-align:center;pointer-events:none}
@@ -38,37 +32,25 @@ input,button{font-family:inherit}
 .bps{font-size:12px;color:#6b7280}
 .bsl{font-size:9px;color:#6b7280;letter-spacing:1px;text-transform:uppercase;margin-top:1px}
 .brp{border-radius:20px;padding:4px 12px;font-size:11px;font-weight:500;text-align:center;margin-top:6px;border:1px solid #22c55e44;background:#0d1f0d;color:#22c55e}
-
-/* RPM lateral */
 .rpmw{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px}
 .rpmbig{font-size:20px;font-weight:500;color:#fff;line-height:1}
 .rpml{font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:1px}
 .rpmbg{background:#1e2535;border-radius:4px;height:5px;width:75%;overflow:hidden;margin-top:4px}
 .rpmfill{height:5px;border-radius:4px;background:linear-gradient(90deg,#4a9eff,#22c55e);transition:width .4s}
-
-/* Grid métricas 2x2 */
 .pmg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
 .mc{background:#161b25;border-radius:10px;padding:10px 12px;border:1px solid #1e2535}
 .ml{font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px}
 .mv{font-size:18px;font-weight:500;color:#fff;line-height:1}
 .mu{font-size:10px;color:#6b7280;margin-left:2px}
-
-/* Alertas */
 .pal-row{display:flex;gap:7px;margin-bottom:10px;flex-wrap:wrap;justify-content:center}
 .pal{font-size:10px;padding:3px 9px;border-radius:20px}
 .pal-ok{background:#0a1f0a;border:1px solid #22c55e44;color:#22c55e}
 .pal-warn{background:#2a1f0a;border:1px solid #f59e0b44;color:#f59e0b}
 .pal-info{background:#0a1a2a;border:1px solid #4a9eff44;color:#4a9eff}
 .pal-err{background:#2a0a0a;border:1px solid #ef444444;color:#ef4444}
-
-/* Último registro */
 .lastreg{background:#111318;border-radius:10px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
-
-/* Botón editar */
 .pedit{background:transparent;border:1px solid #2a3347;border-radius:8px;color:#9ca3af;font-size:11px;padding:6px 14px;cursor:pointer;width:100%}
 .pedit:hover{background:#1e2535;color:#fff}
-
-/* Modal */
 .pmo{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);align-items:flex-end;justify-content:center;z-index:9998;padding:0 12px 80px}
 .pmo.open{display:flex}
 .pmob{background:#161b25;border:1px solid #2a3347;border-radius:16px;padding:20px;width:100%;max-width:460px}
@@ -84,181 +66,135 @@ input,button{font-family:inherit}
 <body>
 <div id="root"></div>
 <script>
-const {useState,useEffect,useRef,useCallback} = React;
-const e = React.createElement;
+const {useState,useEffect,useRef,useCallback}=React;
+const e=React.createElement;
 
-const API = "https://script.google.com/macros/s/AKfycbxmY4q36pwRZyZM-cEAEWNTChhKcXVlLB61avSQTkrtp42MHuX7fim20SpF8FSPR4ir/exec";
-const BAT_KWH = 16, RANGE_OFF = 133;
-const tod = () => new Date().toLocaleDateString("es-ES");
-const gBC = p => p>=60?"#22c55e":p>=30?"#f59e0b":"#ef4444";
+const API="https://script.google.com/macros/s/AKfycbxmY4q36pwRZyZM-cEAEWNTChhKcXVlLB61avSQTkrtp42MHuX7fim20SpF8FSPR4ir/exec";
+const BAT_KWH=16,RANGE_OFF=133;
+const tod=()=>new Date().toLocaleDateString("es-ES");
+const gBC=p=>p>=60?"#22c55e":p>=30?"#f59e0b":"#ef4444";
 
-const MODES = [
-  {id:"eco",label:"ECO",color:"#22c55e"},
-  {id:"normal",label:"Normal",color:"#3b82f6"},
-  {id:"sport",label:"Rapido",color:"#ef4444"},
-];
-const CLOCS = [
-  {id:"none",label:"Sin carga",color:"#475569"},
-  {id:"home",label:"Casa",color:"#3b82f6"},
-  {id:"work",label:"Trabajo",color:"#a78bfa"},
-  {id:"public",label:"Publico",color:"#f59e0b"},
-];
-const SEASONS = [
+const MODES=[{id:"eco",label:"ECO",color:"#22c55e"},{id:"normal",label:"Normal",color:"#3b82f6"},{id:"sport",label:"Rapido",color:"#ef4444"}];
+const CLOCS=[{id:"none",label:"Sin carga",color:"#475569"},{id:"home",label:"Casa",color:"#3b82f6"},{id:"work",label:"Trabajo",color:"#a78bfa"},{id:"public",label:"Publico",color:"#f59e0b"}];
+const SEASONS=[
   {id:"invierno",label:"Invierno",color:"#60a5fa",months:[12,1,2]},
   {id:"primavera",label:"Primavera",color:"#34d399",months:[3,4,5]},
   {id:"verano",label:"Verano",color:"#fbbf24",months:[6,7,8]},
   {id:"otono",label:"Otono",color:"#f97316",months:[9,10,11]},
 ];
-const getSeason = () => { const m=new Date().getMonth()+1; return SEASONS.find(s=>s.months.includes(m))?.id||"primavera"; };
+const getSeason=()=>{const m=new Date().getMonth()+1;return SEASONS.find(s=>s.months.includes(m))?.id||"primavera";};
 
-async function apiGet(){ const r=await fetch(API+"?action=getAll"); return r.json(); }
-async function apiPost(action,data){ const r=await fetch(API,{method:"POST",body:JSON.stringify({action,data})}); return r.json(); }
+// Categorías mantenimiento específicas e-Up eléctrico
+const MANT_CATS=[
+  {id:"neumaticos",    label:"Neumáticos",       icon:"⚫", color:"#f59e0b", km:40000},
+  {id:"frenos_past",   label:"Pastillas freno",  icon:"🔴", color:"#ef4444", km:60000},
+  {id:"frenos_disc",   label:"Discos freno",     icon:"⭕", color:"#f97316", km:80000},
+  {id:"bateria12v",    label:"Batería 12V",      icon:"🔋", color:"#4a9eff", km:null},
+  {id:"bateria_ppal",  label:"Batería principal",icon:"⚡", color:"#22c55e", km:null},
+  {id:"escobillas",    label:"Escobillas",       icon:"🌧️", color:"#a78bfa", km:20000},
+  {id:"aire_acond",    label:"Aire acondicionado",icon:"❄️",color:"#60a5fa", km:null},
+  {id:"itv",           label:"ITV",              icon:"📋", color:"#34d399", km:null},
+  {id:"otro",          label:"Otro",             icon:"🔧", color:"#94a3b8", km:null},
+];
+
+const ZONAS=["Puzol","Sagunto","Puerto Sagunto","Valencia","Otro"];
+const REDES=["Iberdrola","Repsol","Endesa","Wenea","Zunder","Plenergy","EDP","Ayuntamiento","Otro"];
+
+async function apiGet(){const r=await fetch(API+"?action=getAll");return r.json();}
+async function apiPost(action,data){const r=await fetch(API,{method:"POST",body:JSON.stringify({action,data})});return r.json();}
 
 const iS={background:"#0f172a",border:"1px solid #334155",borderRadius:"8px",color:"#f1f5f9",padding:"8px 12px",width:"100%",fontSize:"14px",boxSizing:"border-box"};
 const bP={background:"#3b82f6",color:"#fff",border:"none",borderRadius:"8px",padding:"10px 16px",cursor:"pointer",fontWeight:"600",fontSize:"14px",width:"100%"};
 
-/* ═══════════════════════════════════
-   PANEL DE INSTRUMENTOS
-═══════════════════════════════════ */
-function Panel({bat, regs, sohs}) {
-  const [speed, setSpeed] = useState(0);
-  const [rpm, setRpm] = useState(0);
-  const [modal, setModal] = useState(false);
-  const [ts, setTs] = useState(0);
-  const [tr, setTr] = useState(0);
+/* ═══════════ PANEL DE INSTRUMENTOS ═══════════ */
+function Panel({bat,regs,sohs}){
+  const [speed,setSpeed]=useState(0);
+  const [rpm,setRpm]=useState(0);
+  const [modal,setModal]=useState(false);
+  const [ts,setTs]=useState(0);
+  const [tr,setTr]=useState(0);
 
-  const ringColor = gBC(bat);
-  const eR = Math.round((bat/100)*112);
-  const kwh = ((bat/100)*BAT_KWH).toFixed(1);
-  const aC = regs.length ? (regs.reduce((s,l)=>s+(+l.consumo),0)/regs.length).toFixed(1) : null;
-  const soh = sohs[0]?.soh || null;
-  const lastReg = regs[0];
-
-  const CIRC = 364.4;
-  const batOffset = CIRC - (bat/100)*CIRC;
-  const ARC = 220;
-  const arcOffset = ARC - (speed/160)*ARC;
-
-  const hora = new Date().toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"});
-  const alerts = [];
-  if (bat>55) alerts.push({c:"pal-ok",t:"OK para 120 km"});
-  else if (bat>20) alerts.push({c:"pal-warn",t:"Batería baja"});
+  const ringColor=gBC(bat);
+  const eR=Math.round((bat/100)*112);
+  const kwh=((bat/100)*BAT_KWH).toFixed(1);
+  const aC=regs.length?(regs.reduce((s,l)=>s+(+l.consumo),0)/regs.length).toFixed(1):null;
+  const soh=sohs[0]?.soh||null;
+  const lastReg=regs[0];
+  const CIRC=364.4;
+  const batOffset=CIRC-(bat/100)*CIRC;
+  const ARC=220;
+  const arcOffset=ARC-(speed/160)*ARC;
+  const hora=new Date().toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"});
+  const alerts=[];
+  if(bat>55)alerts.push({c:"pal-ok",t:"OK para 120 km"});
+  else if(bat>20)alerts.push({c:"pal-warn",t:"Batería baja"});
   else alerts.push({c:"pal-err",t:"¡Carga urgente!"});
-  if (soh) alerts.push({c:soh>=85?"pal-ok":soh>=70?"pal-warn":"pal-err", t:"SOH "+soh+"%"});
+  if(soh)alerts.push({c:soh>=85?"pal-ok":soh>=70?"pal-warn":"pal-err",t:"SOH "+soh+"%"});
   alerts.push({c:"pal-info",t:hora});
 
-  return e("div", null,
-    e("div", {className:"pw"},
-      // Top bar
-      e("div", {className:"ptb"},
-        e("span", {className:"pbrand"}, "VW e-up! · Panel"),
-        e("span", {className:"pst"}, e("span",{className:"pdot"}), regs.length+" registros")
+  return e("div",null,
+    e("div",{className:"pw"},
+      e("div",{className:"ptb"},
+        e("span",{className:"pbrand"},"VW e-up! · Panel"),
+        e("span",{className:"pst"},e("span",{className:"pdot"}),regs.length+" registros")
       ),
-
-      // ── Fila: speedo | anillo | rpm ──
-      e("div", {className:"ptr"},
-        // Velocímetro
-        e("div", {className:"spd"},
-          e("svg", {width:"86", height:"54", viewBox:"0 0 160 100"},
-            e("path", {d:"M20 90 A70 70 0 0 1 140 90", fill:"none", stroke:"#1e2535", strokeWidth:"10", strokeLinecap:"round"}),
-            e("path", {d:"M20 90 A70 70 0 0 1 140 90", fill:"none", stroke:"#4a9eff", strokeWidth:"10", strokeLinecap:"round",
-              strokeDasharray:ARC, strokeDashoffset:arcOffset, style:{transition:"stroke-dashoffset .4s"}})
+      e("div",{className:"ptr"},
+        e("div",{className:"spd"},
+          e("svg",{width:"86",height:"54",viewBox:"0 0 160 100"},
+            e("path",{d:"M20 90 A70 70 0 0 1 140 90",fill:"none",stroke:"#1e2535",strokeWidth:"10",strokeLinecap:"round"}),
+            e("path",{d:"M20 90 A70 70 0 0 1 140 90",fill:"none",stroke:"#4a9eff",strokeWidth:"10",strokeLinecap:"round",strokeDasharray:ARC,strokeDashoffset:arcOffset,style:{transition:"stroke-dashoffset .4s"}})
           ),
-          e("div", {className:"spd-n"}, speed),
-          e("div", {className:"spd-u"}, "km/h")
+          e("div",{className:"spd-n"},speed),
+          e("div",{className:"spd-u"},"km/h")
         ),
-
-        // Anillo batería
-        e("div", {style:{display:"flex",flexDirection:"column",alignItems:"center"}},
-          e("div", {className:"brw"},
-            e("svg", {viewBox:"0 0 140 140"},
-              e("circle", {cx:"70",cy:"70",r:"58",fill:"none",stroke:"#1e2535",strokeWidth:"12"}),
-              e("circle", {cx:"70",cy:"70",r:"58",fill:"none",
-                stroke:ringColor, strokeWidth:"12", strokeLinecap:"round",
-                strokeDasharray:CIRC, strokeDashoffset:batOffset,
-                transform:"rotate(-90 70 70)",
-                style:{transition:"stroke-dashoffset .5s, stroke .5s"}})
+        e("div",{style:{display:"flex",flexDirection:"column",alignItems:"center"}},
+          e("div",{className:"brw"},
+            e("svg",{viewBox:"0 0 140 140"},
+              e("circle",{cx:"70",cy:"70",r:"58",fill:"none",stroke:"#1e2535",strokeWidth:"12"}),
+              e("circle",{cx:"70",cy:"70",r:"58",fill:"none",stroke:ringColor,strokeWidth:"12",strokeLinecap:"round",strokeDasharray:CIRC,strokeDashoffset:batOffset,transform:"rotate(-90 70 70)",style:{transition:"stroke-dashoffset .5s, stroke .5s"}})
             ),
-            e("div", {className:"bov"},
-              e("div", {className:"bpn", style:{color:ringColor}}, bat),
-              e("div", {className:"bps"}, "%"),
-              e("div", {className:"bsl"}, "Batería")
+            e("div",{className:"bov"},
+              e("div",{className:"bpn",style:{color:ringColor}},bat),
+              e("div",{className:"bps"},"%"),
+              e("div",{className:"bsl"},"Batería")
             )
           ),
-          e("div", {className:"brp"}, "≈ "+eR+" km")
+          e("div",{className:"brp"},"≈ "+eR+" km")
         ),
-
-        // RPM
-        e("div", {className:"rpmw"},
-          e("div", {className:"rpml"}, "Motor"),
-          e("div", {className:"rpmbig"}, rpm>0?rpm.toLocaleString():"0"),
-          e("div", {className:"rpml"}, "rpm"),
-          e("div", {className:"rpmbg"},
-            e("div", {className:"rpmfill", style:{width:Math.min(rpm/12000*100,100)+"%"}})
-          )
+        e("div",{className:"rpmw"},
+          e("div",{className:"rpml"},"Motor"),
+          e("div",{className:"rpmbig"},rpm>0?rpm.toLocaleString():"0"),
+          e("div",{className:"rpml"},"rpm"),
+          e("div",{className:"rpmbg"},e("div",{className:"rpmfill",style:{width:Math.min(rpm/12000*100,100)+"%"}}))
         )
       ),
-
-      // ── Grid métricas 2x2 ──
-      e("div", {className:"pmg"},
-        e("div", {className:"mc"},
-          e("div",{className:"ml"},"kWh disponibles"),
-          e("div",{className:"mv"}, kwh, e("span",{className:"mu"}," kWh"))
-        ),
-        e("div", {className:"mc"},
-          e("div",{className:"ml"},"Autonomía"),
-          e("div",{className:"mv"}, eR, e("span",{className:"mu"}," km"))
-        ),
-        e("div", {className:"mc"},
-          e("div",{className:"ml"},"Consumo medio"),
-          e("div",{className:"mv"}, aC||"--", e("span",{className:"mu"}, aC?" kWh/100":""))
-        ),
-        e("div", {className:"mc"},
-          e("div",{className:"ml"},"SOH batería"),
-          e("div",{className:"mv", style:{color:soh?(soh>=85?"#22c55e":soh>=70?"#f59e0b":"#ef4444"):"#475569"}},
-            soh?soh+"%":"—"
-          )
-        )
+      e("div",{className:"pmg"},
+        e("div",{className:"mc"},e("div",{className:"ml"},"kWh disponibles"),e("div",{className:"mv"},kwh,e("span",{className:"mu"}," kWh"))),
+        e("div",{className:"mc"},e("div",{className:"ml"},"Autonomía"),e("div",{className:"mv"},eR,e("span",{className:"mu"}," km"))),
+        e("div",{className:"mc"},e("div",{className:"ml"},"Consumo medio"),e("div",{className:"mv"},aC||"--",e("span",{className:"mu"},aC?" kWh/100":""))),
+        e("div",{className:"mc"},e("div",{className:"ml"},"SOH batería"),e("div",{className:"mv",style:{color:soh?(soh>=85?"#22c55e":soh>=70?"#f59e0b":"#ef4444"):"#475569"}},soh?soh+"%":"—"))
       ),
-
-      // Alertas
-      e("div", {className:"pal-row"},
-        alerts.map((a,i)=>e("span",{key:i,className:"pal "+a.c},a.t))
-      ),
-
-      // Último registro
-      lastReg && e("div", {className:"lastreg"},
-        e("div",{style:{fontSize:"11px",color:"#6b7280"}},
-          e("div",null,"Último trayecto"),
-          e("div",null,lastReg.fecha)
-        ),
+      e("div",{className:"pal-row"},alerts.map((a,i)=>e("span",{key:i,className:"pal "+a.c},a.t))),
+      lastReg&&e("div",{className:"lastreg"},
+        e("div",{style:{fontSize:"11px",color:"#6b7280"}},e("div",null,"Último trayecto"),e("div",null,lastReg.fecha)),
         e("div",{style:{display:"flex",gap:"14px"}},
-          [[lastReg.bateria_salida+"%→"+lastReg.bateria_llegada+"%","Bat","#4a9eff"],
-           [lastReg.km+" km","Dist","#22c55e"],
-           [lastReg.consumo+" kWh","Cons",lastReg.consumo>18?"#ef4444":lastReg.consumo>15?"#f59e0b":"#22c55e"]
-          ].map(([v,l,c])=>e("div",{key:l,style:{textAlign:"center"}},
+          [[lastReg.bateria_salida+"%→"+lastReg.bateria_llegada+"%","Bat","#4a9eff"],[lastReg.km+" km","Dist","#22c55e"],[lastReg.consumo+" kWh","Cons",lastReg.consumo>18?"#ef4444":lastReg.consumo>15?"#f59e0b":"#22c55e"]].map(([v,l,c])=>e("div",{key:l,style:{textAlign:"center"}},
             e("div",{style:{fontSize:"12px",fontWeight:"600",color:c}},v),
             e("div",{style:{fontSize:"9px",color:"#6b7280"}},l)
           ))
         )
       ),
-
-      // Botón
-      e("button", {className:"pedit", onClick:()=>{setTs(speed);setTr(rpm);setModal(true);}},
-        "⚡ Actualizar velocidad / RPM"
-      )
+      e("button",{className:"pedit",onClick:()=>{setTs(speed);setTr(rpm);setModal(true);}},"⚡ Actualizar velocidad / RPM")
     ),
-
-    // Modal
-    e("div", {className:"pmo"+(modal?" open":""), onClick:ev=>{if(ev.currentTarget===ev.target)setModal(false);}},
-      e("div", {className:"pmob"},
+    e("div",{className:"pmo"+(modal?" open":""),onClick:ev=>{if(ev.currentTarget===ev.target)setModal(false);}},
+      e("div",{className:"pmob"},
         e("h3",null,"Velocidad y RPM"),
         e("label",null,"Velocidad (km/h)"),
         e("div",{className:"vr"},e("span",null,"0"),e("span",{style:{color:"#4a9eff",fontWeight:"500"}},ts+" km/h"),e("span",null,"160")),
         e("input",{type:"range",min:0,max:160,value:ts,onInput:ev=>setTs(+ev.target.value)}),
         e("div",{style:{marginTop:"12px"}}),
         e("label",null,"RPM motor"),
-        e("div",{className:"vr"},e("span",null,"0"),e("span",{style:{color:"#4a9eff",fontWeight:"500"}},ts>0?Math.round(ts/160*8000).toLocaleString():tr+" rpm"),e("span",null,"12000")),
+        e("div",{className:"vr"},e("span",null,"0"),e("span",{style:{color:"#4a9eff",fontWeight:"500"}},tr+" rpm"),e("span",null,"12000")),
         e("input",{type:"range",min:0,max:12000,step:100,value:tr,onInput:ev=>setTr(+ev.target.value)}),
         e("div",{className:"pmobbtns"},
           e("button",{className:"pmbc",onClick:()=>setModal(false)},"Cancelar"),
@@ -269,9 +205,7 @@ function Panel({bat, regs, sohs}) {
   );
 }
 
-/* ═══════════════════════════════════
-   APP PRINCIPAL
-═══════════════════════════════════ */
+/* ═══════════ APP PRINCIPAL ═══════════ */
 function App(){
   const [regs,setRegs]=useState([]);
   const [sohs,setSohs]=useState([]);
@@ -283,8 +217,20 @@ function App(){
   const [dayF,setDayF]=useState({date:tod(),s:"",e:"",km:"",mode:"eco",loc:"none",season:getSeason()});
   const [editId,setEditId]=useState(null);
   const [degF,setDegF]=useState({range:"",date:tod(),notes:""});
-  const [zone,setZone]=useState("Sueca");
-  const [selSt,setSelSt]=useState(null);
+
+  // Mantenimiento
+  const [mants,setMants]=useState([]);
+  const [mantCat,setMantCat]=useState("todas");
+  const [mantF,setMantF]=useState({cat:"neumaticos",fecha:tod(),km:"",taller:"",coste:"",notas:"",prox_km:"",prox_fecha:""});
+  const [mantEdit,setMantEdit]=useState(null);
+
+  // Cargadores
+  const [cargadores,setCargadores]=useState([]);
+  const [cargZona,setCargZona]=useState("todas");
+  const [cargEdit,setCargEdit]=useState(null);
+  const [showCargForm,setShowCargForm]=useState(false);
+  const [cargF,setCargF]=useState({nombre:"",direccion:"",zona:"Puzol",red:"Iberdrola",conectores:"Type 2, CCS",potencia:"22 kW",notas:"",lat:"",lng:""});
+
   const [aiMsgs,setAiMsgs]=useState([{r:"a",t:"Hola Paola! Soy tu asistente del VW e-up! 2014. Tus datos se guardan en Google Sheets."}]);
   const [aiIn,setAiIn]=useState("");
   const [aiLoad,setAiLoad]=useState(false);
@@ -297,20 +243,18 @@ function App(){
     setStatus("loading");
     try{
       const d=await apiGet();
-      if(!d.ok) throw new Error();
+      if(!d.ok)throw new Error();
       setRegs((d.registros||[]).sort((a,b)=>b.id-a.id));
       setSohs((d.soh||[]).sort((a,b)=>b.id-a.id));
-      if(d.config?.bateria_actual) setBat(+d.config.bateria_actual);
+      setMants((d.mantenimiento||[]).sort((a,b)=>b.id-a.id));
+      setCargadores(d.cargadores||[]);
+      if(d.config?.bateria_actual)setBat(+d.config.bateria_actual);
       setStatus("ok");
     }catch{setStatus("error");}
   },[]);
-
   useEffect(()=>{load();},[]);
 
-  const saveBat=async v=>{
-    setBat(v);
-    try{await apiPost("saveConfig",{clave:"bateria_actual",valor:String(v)});}catch{}
-  };
+  const saveBat=async v=>{setBat(v);try{await apiPost("saveConfig",{clave:"bateria_actual",valor:String(v)});}catch{}};
 
   const saveDay=async()=>{
     if(!dayF.s||!dayF.e||!dayF.km){showToast("Rellena todos los campos",false);return;}
@@ -318,58 +262,65 @@ function App(){
     const cons=((((+dayF.s-+dayF.e)/100)*BAT_KWH)/+dayF.km*100).toFixed(1);
     const payload={fecha:dayF.date,bateria_salida:+dayF.s,bateria_llegada:+dayF.e,km:+dayF.km,consumo:+cons,modo:dayF.mode,carga:dayF.loc,temporada:dayF.season};
     try{
-      if(editId){
-        await apiPost("updateRegistro",{id:editId,...payload});
-        setRegs(r=>r.map(x=>x.id===editId?{...x,...payload,id:editId}:x));
-        setEditId(null);
-        showToast("Registro actualizado");
-      }else{
-        const res=await apiPost("saveRegistro",payload);
-        if(!res.ok) throw new Error();
-        setRegs(r=>[{id:res.id,...payload},...r]);
-        showToast("Guardado en Google Sheets");
-      }
+      if(editId){await apiPost("updateRegistro",{id:editId,...payload});setRegs(r=>r.map(x=>x.id===editId?{...x,...payload,id:editId}:x));setEditId(null);showToast("Actualizado");}
+      else{const res=await apiPost("saveRegistro",payload);if(!res.ok)throw new Error();setRegs(r=>[{id:res.id,...payload},...r]);showToast("Guardado en Sheets");}
       await saveBat(+dayF.e);
       setDayF({date:tod(),s:"",e:"",km:"",mode:"eco",loc:"none",season:getSeason()});
     }catch{showToast("Error al guardar",false);}
     setSyncing(false);
   };
 
-  const delReg=async id=>{
-    setSyncing(true);
-    try{await apiPost("deleteRegistro",{id});setRegs(r=>r.filter(x=>x.id!==id));showToast("Eliminado");}
-    catch{showToast("Error",false);}
-    setSyncing(false);
-  };
-
-  const editReg=log=>{
-    setDayF({date:log.fecha,s:String(log.bateria_salida),e:String(log.bateria_llegada),km:String(log.km),mode:log.modo,loc:log.carga,season:log.temporada||getSeason()});
-    setEditId(log.id);setTab("diary");window.scrollTo(0,0);
-  };
+  const delReg=async id=>{setSyncing(true);try{await apiPost("deleteRegistro",{id});setRegs(r=>r.filter(x=>x.id!==id));showToast("Eliminado");}catch{showToast("Error",false);}setSyncing(false);};
+  const editReg=log=>{setDayF({date:log.fecha,s:String(log.bateria_salida),e:String(log.bateria_llegada),km:String(log.km),mode:log.modo,loc:log.carga,season:log.temporada||getSeason()});setEditId(log.id);setTab("diary");window.scrollTo(0,0);};
 
   const saveDeg=async()=>{
     if(!degF.range){showToast("Introduce la autonomia real",false);return;}
     setSyncing(true);
     const soh=((+degF.range/RANGE_OFF)*100).toFixed(1);
     const kwh=((+degF.range/RANGE_OFF)*BAT_KWH).toFixed(2);
-    try{
-      const res=await apiPost("saveSOH",{fecha:degF.date,autonomia_real:+degF.range,soh:+soh,kwh_usables:+kwh,notas:degF.notes});
-      if(!res.ok) throw new Error();
-      setSohs(s=>[{id:res.id,fecha:degF.date,autonomia_real:+degF.range,soh:+soh,kwh_usables:+kwh,notas:degF.notes},...s]);
-      setDegF({range:"",date:tod(),notes:""});
-      showToast("SOH guardado");
-    }catch{showToast("Error al guardar SOH",false);}
+    try{const res=await apiPost("saveSOH",{fecha:degF.date,autonomia_real:+degF.range,soh:+soh,kwh_usables:+kwh,notas:degF.notes});if(!res.ok)throw new Error();setSohs(s=>[{id:res.id,fecha:degF.date,autonomia_real:+degF.range,soh:+soh,kwh_usables:+kwh,notas:degF.notes},...s]);setDegF({range:"",date:tod(),notes:""});showToast("SOH guardado");}
+    catch{showToast("Error",false);}
     setSyncing(false);
   };
 
+  // Mantenimiento
+  const saveMant=async()=>{
+    if(!mantF.km||!mantF.fecha){showToast("Rellena fecha y km",false);return;}
+    setSyncing(true);
+    const cat=MANT_CATS.find(c=>c.id===mantF.cat);
+    const payload={tipo:cat?.label||mantF.cat,categoria:mantF.cat,fecha:mantF.fecha,km:+mantF.km,taller:mantF.taller,coste:mantF.coste?+mantF.coste:0,notas:mantF.notas,prox_km:mantF.prox_km?+mantF.prox_km:"",prox_fecha:mantF.prox_fecha};
+    try{
+      if(mantEdit){await apiPost("updateMantenimiento",{id:mantEdit,...payload});setMants(m=>m.map(x=>x.id===mantEdit?{...x,...payload,id:mantEdit}:x));setMantEdit(null);showToast("Actualizado");}
+      else{const res=await apiPost("saveMantenimiento",payload);if(!res.ok)throw new Error();setMants(m=>[{id:res.id,...payload},...m]);showToast("Mantenimiento guardado");}
+      setMantF({cat:"neumaticos",fecha:tod(),km:"",taller:"",coste:"",notas:"",prox_km:"",prox_fecha:""});
+    }catch{showToast("Error al guardar",false);}
+    setSyncing(false);
+  };
+  const delMant=async id=>{setSyncing(true);try{await apiPost("deleteMantenimiento",{id});setMants(m=>m.filter(x=>x.id!==id));showToast("Eliminado");}catch{showToast("Error",false);}setSyncing(false);};
+
+  // Cargadores
+  const saveCarg=async()=>{
+    if(!cargF.nombre||!cargF.direccion){showToast("Nombre y dirección obligatorios",false);return;}
+    setSyncing(true);
+    const payload={...cargF,lat:cargF.lat?+cargF.lat:"",lng:cargF.lng?+cargF.lng:"",activo:true};
+    try{
+      if(cargEdit){await apiPost("updateCargador",{id:cargEdit,...payload});setCargadores(c=>c.map(x=>x.id===cargEdit?{...x,...payload,id:cargEdit}:x));setCargEdit(null);showToast("Cargador actualizado");}
+      else{const res=await apiPost("saveCargador",payload);if(!res.ok)throw new Error();setCargadores(c=>[{id:res.id,...payload},...c]);showToast("Cargador añadido");}
+      setCargF({nombre:"",direccion:"",zona:"Puzol",red:"Iberdrola",conectores:"Type 2, CCS",potencia:"22 kW",notas:"",lat:"",lng:""});
+      setShowCargForm(false);
+    }catch{showToast("Error al guardar",false);}
+    setSyncing(false);
+  };
+  const delCarg=async id=>{setSyncing(true);try{await apiPost("deleteCargador",{id});setCargadores(c=>c.filter(x=>x.id!==id));showToast("Eliminado");}catch{showToast("Error",false);}setSyncing(false);};
+
   const sendAI=async()=>{
-    if(!aiIn.trim()||aiLoad) return;
+    if(!aiIn.trim()||aiLoad)return;
     const msg=aiIn.trim();setAiIn("");
     const msgs=[...aiMsgs,{r:"u",t:msg}];
     setAiMsgs(msgs);setAiLoad(true);
     const ac=regs.length?(regs.reduce((s,l)=>s+(+l.consumo),0)/regs.length).toFixed(1):"15.5";
     const ld2=sohs[0];
-    const sys=`Eres experto en VE y asistente del VW e-up! 2014 de Paola. DATOS: Bateria 16kWh | Autonomia 133km | SOH:${ld2?ld2.soh+"%":"no medido"} | Consumo:${ac}kWh/100km | Bateria actual:${bat}% | Registros:${regs.length} | Km:${regs.reduce((s,l)=>s+(+l.km),0)} | Uso:120km/dia L-V | Zona Sueca-Valencia. Responde en espanol, max 3 parrafos cortos.`;
+    const sys=`Eres experto en VE y asistente del VW e-up! 2014 de Paola. DATOS: Bateria 16kWh | Autonomia 133km | SOH:${ld2?ld2.soh+"%":"no medido"} | Consumo:${ac}kWh/100km | Bateria actual:${bat}% | Registros:${regs.length} | Km:${regs.reduce((s,l)=>s+(+l.km),0)} | Uso:120km/dia L-V | Zona Puzol-Valencia. Responde en espanol, max 3 parrafos cortos.`;
     try{
       const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,system:sys,messages:msgs.map(m=>({role:m.r==="u"?"user":"assistant",content:m.t}))})});
       const d=await r.json();
@@ -387,15 +338,14 @@ function App(){
   const sC=soh>=85?"#22c55e":soh>=70?"#f59e0b":"#ef4444";
   const pC=dayF.s&&dayF.e&&dayF.km?((((+dayF.s-+dayF.e)/100)*BAT_KWH)/+dayF.km*100).toFixed(1):null;
 
-  const TABS=[["panel","Panel"],["home","Inicio"],["diary","Diario"],["battery","Bateria"],["map","Cargadores"],["advisor","IA"],["stats","Stats"]];
+  const TABS=[["panel","Panel"],["home","Inicio"],["diary","Diario"],["battery","Bateria"],["mant","Manten."],["map","Cargadores"],["advisor","IA"],["stats","Stats"]];
 
-  if(status==="loading") return e("div",{style:{background:"#0f172a",minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",color:"#f1f5f9"}},
+  if(status==="loading")return e("div",{style:{background:"#0f172a",minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",color:"#f1f5f9"}},
     e("div",{style:{fontSize:"48px",marginBottom:"16px"}},"⚡"),
     e("div",{style:{fontWeight:"700",fontSize:"18px",marginBottom:"8px"}},"Cargando tus datos..."),
     e("div",{style:{color:"#94a3b8",fontSize:"13px"}},"Conectando con Google Sheets")
   );
-
-  if(status==="error") return e("div",{style:{background:"#0f172a",minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",padding:"24px"}},
+  if(status==="error")return e("div",{style:{background:"#0f172a",minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",padding:"24px"}},
     e("div",{style:{background:"#1e293b",borderRadius:"16px",padding:"24px",textAlign:"center",maxWidth:"360px"}},
       e("div",{style:{fontSize:"40px",marginBottom:"12px"}},"📡"),
       e("div",{style:{fontWeight:"700",fontSize:"16px",marginBottom:"8px",color:"#fca5a5"}},"Sin conexion con Sheets"),
@@ -435,8 +385,10 @@ function App(){
 
     e("div",{style:{padding:"16px"}},
 
+      /* ── PANEL ── */
       tab==="panel"&&e(Panel,{bat,regs,sohs}),
 
+      /* ── INICIO ── */
       tab==="home"&&e("div",null,
         card([
           e("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"10px"}},
@@ -472,27 +424,19 @@ function App(){
               )
             )
           )
-        ]),
-        e("div",{style:{background:"#14532d",border:"1px solid #22c55e",borderRadius:"12px",padding:"12px",display:"flex",alignItems:"center",gap:"10px"}},
-          e("span",{style:{fontSize:"20px"}},"☁️"),
-          e("div",null,
-            e("div",{style:{fontWeight:"600",fontSize:"13px"}},"Datos guardados automaticamente"),
-            e("div",{style:{color:"#94a3b8",fontSize:"12px"}},"Sincronizado con Google Sheets")
-          )
-        )
+        ])
       ),
 
+      /* ── DIARIO ── */
       tab==="diary"&&e("div",null,
         card([
           e("div",{style:{fontWeight:"700",marginBottom:"14px"}},editId?"Editando registro":"Registro del trayecto"),
-          lbl("Fecha"),
-          e("input",{style:{...iS,marginBottom:"10px"},value:dayF.date,onInput:ev=>setDayF(f=>({...f,date:ev.target.value}))}),
+          lbl("Fecha"),e("input",{style:{...iS,marginBottom:"10px"},value:dayF.date,onInput:ev=>setDayF(f=>({...f,date:ev.target.value}))}),
           e("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"10px",marginBottom:"10px"}},
             e("div",null,lbl("% Bateria al salir"),e("input",{style:iS,type:"number",placeholder:"85",value:dayF.s,onInput:ev=>setDayF(f=>({...f,s:ev.target.value}))})),
             e("div",null,lbl("% Bateria al llegar"),e("input",{style:iS,type:"number",placeholder:"25",value:dayF.e,onInput:ev=>setDayF(f=>({...f,e:ev.target.value}))}))
           ),
-          lbl("Kilometros"),
-          e("input",{style:{...iS,marginBottom:"10px"},type:"number",placeholder:"60 ida / 120 dia completo",value:dayF.km,onInput:ev=>setDayF(f=>({...f,km:ev.target.value}))}),
+          lbl("Kilometros"),e("input",{style:{...iS,marginBottom:"10px"},type:"number",placeholder:"60 ida / 120 dia completo",value:dayF.km,onInput:ev=>setDayF(f=>({...f,km:ev.target.value}))}),
           lbl("Temporada"),
           e("div",{style:{display:"flex",gap:"6px",flexWrap:"wrap",marginBottom:"10px"}},
             SEASONS.map(s=>e("button",{key:s.id,onClick:()=>setDayF(f=>({...f,season:s.id})),style:{flex:1,padding:"8px 4px",borderRadius:"8px",border:"none",cursor:"pointer",fontSize:"11px",fontWeight:"600",minWidth:"70px",background:dayF.season===s.id?s.color:"#334155",color:dayF.season===s.id?"#0f172a":"#94a3b8"}},s.label))
@@ -514,36 +458,36 @@ function App(){
             editId&&e("button",{onClick:()=>{setEditId(null);setDayF({date:tod(),s:"",e:"",km:"",mode:"eco",loc:"none",season:getSeason()});},style:{...bP,background:"#334155",width:"auto",padding:"10px 14px"}},"X")
           )
         ]),
-        regs.length===0
-          ?e("div",{style:{textAlign:"center",color:"#475569",padding:"30px"}},"Sin registros aun.")
-          :card([
-            e("div",{style:{fontWeight:"700",marginBottom:"14px"}},"Historial — "+regs.length+" registros"),
-            regs.map(log=>{
-              const m=MODES.find(md=>md.id===log.modo)||MODES[1];
-              const lc=CLOCS.find(c=>c.id===log.carga)||CLOCS[0];
-              const cc=log.consumo>18?"#ef4444":log.consumo>15?"#f59e0b":"#22c55e";
-              return e("div",{key:log.id,style:{borderBottom:"1px solid #334155",paddingBottom:"12px",marginBottom:"12px"}},
-                e("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"6px"}},
-                  e("span",{style:{fontWeight:"700"}},log.fecha+" · "+log.km+" km"),
-                  e("div",{style:{display:"flex",gap:"5px"}},
-                    e("span",{style:{background:m.color+"33",color:m.color,borderRadius:"6px",padding:"2px 7px",fontSize:"11px",fontWeight:"600"}},m.label),
-                    e("button",{onClick:()=>editReg(log),style:{background:"#334155",border:"none",borderRadius:"6px",color:"#94a3b8",cursor:"pointer",padding:"3px 7px",fontSize:"11px"}},"✏"),
-                    e("button",{onClick:()=>delReg(log.id),style:{background:"#7f1d1d",border:"none",borderRadius:"6px",color:"#fca5a5",cursor:"pointer",padding:"3px 7px",fontSize:"11px"}},"X")
-                  )
-                ),
-                e("div",{style:{display:"flex"}},
-                  [["Bateria",`${log.bateria_salida}%→${log.bateria_llegada}%`,"#3b82f6"],["kWh/100",log.consumo,cc],["Carga",lc.label,lc.color]].map(([l,v,c])=>
-                    e("div",{key:l,style:{flex:1,textAlign:"center"}},
-                      e("div",{style:{fontWeight:"700",color:c,fontSize:"13px"}},v),
-                      e("div",{style:{fontSize:"10px",color:"#64748b"}},l)
-                    )
+        regs.length===0?e("div",{style:{textAlign:"center",color:"#475569",padding:"30px"}},"Sin registros aun."):
+        card([
+          e("div",{style:{fontWeight:"700",marginBottom:"14px"}},"Historial — "+regs.length+" registros"),
+          regs.map(log=>{
+            const m=MODES.find(md=>md.id===log.modo)||MODES[1];
+            const lc=CLOCS.find(c=>c.id===log.carga)||CLOCS[0];
+            const cc=log.consumo>18?"#ef4444":log.consumo>15?"#f59e0b":"#22c55e";
+            return e("div",{key:log.id,style:{borderBottom:"1px solid #334155",paddingBottom:"12px",marginBottom:"12px"}},
+              e("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"6px"}},
+                e("span",{style:{fontWeight:"700"}},log.fecha+" · "+log.km+" km"),
+                e("div",{style:{display:"flex",gap:"5px"}},
+                  e("span",{style:{background:m.color+"33",color:m.color,borderRadius:"6px",padding:"2px 7px",fontSize:"11px",fontWeight:"600"}},m.label),
+                  e("button",{onClick:()=>editReg(log),style:{background:"#334155",border:"none",borderRadius:"6px",color:"#94a3b8",cursor:"pointer",padding:"3px 7px",fontSize:"11px"}},"✏"),
+                  e("button",{onClick:()=>delReg(log.id),style:{background:"#7f1d1d",border:"none",borderRadius:"6px",color:"#fca5a5",cursor:"pointer",padding:"3px 7px",fontSize:"11px"}},"X")
+                )
+              ),
+              e("div",{style:{display:"flex"}},
+                [["Bateria",`${log.bateria_salida}%→${log.bateria_llegada}%`,"#3b82f6"],["kWh/100",log.consumo,cc],["Carga",lc.label,lc.color]].map(([l,v,c])=>
+                  e("div",{key:l,style:{flex:1,textAlign:"center"}},
+                    e("div",{style:{fontWeight:"700",color:c,fontSize:"13px"}},v),
+                    e("div",{style:{fontSize:"10px",color:"#64748b"}},l)
                   )
                 )
-              );
-            })
-          ])
+              )
+            );
+          })
+        ])
       ),
 
+      /* ── BATERÍA SOH ── */
       tab==="battery"&&e("div",null,
         card([
           e("div",{style:{fontWeight:"700",marginBottom:"6px"}},"Salud de la bateria (SOH)"),
@@ -553,9 +497,7 @@ function App(){
               e("div",{style:{fontSize:"54px",fontWeight:"800",color:sC}},soh+"%"),
               e("div",{style:{color:"#94a3b8",fontSize:"13px"}},"Estado de salud estimado"),
               e("div",{style:{fontSize:"13px",marginTop:"4px"}},"~"+ld.kwh_usables+" kWh · "+ld.autonomia_real+" km reales"),
-              e("div",{style:{marginTop:"8px",background:"#0f172a",borderRadius:"8px",padding:"8px",fontSize:"12px"}},
-                soh>=85?"Bateria en buen estado":soh>=70?"Degradacion moderada.":"Degradacion severa. Consulta taller."
-              )
+              e("div",{style:{marginTop:"8px",background:"#0f172a",borderRadius:"8px",padding:"8px",fontSize:"12px"}},soh>=85?"Bateria en buen estado":soh>=70?"Degradacion moderada.":"Degradacion severa. Consulta taller.")
             ),
             e("div",{style:{position:"relative",marginBottom:"8px"}},
               e("div",{style:{background:"#0f172a",borderRadius:"8px",height:"20px",overflow:"hidden"}},
@@ -563,16 +505,13 @@ function App(){
               ),
               [70,85].map(mk=>e("div",{key:mk,style:{position:"absolute",left:`${mk}%`,top:0,bottom:0,width:"2px",background:"#475569"}}))
             )
-          ):e("div",{style:{textAlign:"center",padding:"16px",color:"#475569",fontSize:"13px"}},"Sin mediciones. Registra la primera abajo.")
+          ):e("div",{style:{textAlign:"center",padding:"16px",color:"#475569",fontSize:"13px"}},"Sin mediciones.")
         ]),
         card([
           e("div",{style:{fontWeight:"700",marginBottom:"14px"}},"Nueva medicion SOH"),
-          lbl("Autonomia real (km de 100% a 0%)"),
-          e("input",{style:{...iS,marginBottom:"10px"},type:"number",placeholder:"Ej: 105",value:degF.range,onInput:ev=>setDegF(f=>({...f,range:ev.target.value}))}),
-          lbl("Fecha"),
-          e("input",{style:{...iS,marginBottom:"10px"},value:degF.date,onInput:ev=>setDegF(f=>({...f,date:ev.target.value}))}),
-          lbl("Condiciones"),
-          e("input",{style:{...iS,marginBottom:"12px"},placeholder:"Ej: primavera, autopista",value:degF.notes,onInput:ev=>setDegF(f=>({...f,notes:ev.target.value}))}),
+          lbl("Autonomia real (km de 100% a 0%)"),e("input",{style:{...iS,marginBottom:"10px"},type:"number",placeholder:"Ej: 105",value:degF.range,onInput:ev=>setDegF(f=>({...f,range:ev.target.value}))}),
+          lbl("Fecha"),e("input",{style:{...iS,marginBottom:"10px"},value:degF.date,onInput:ev=>setDegF(f=>({...f,date:ev.target.value}))}),
+          lbl("Condiciones"),e("input",{style:{...iS,marginBottom:"12px"},placeholder:"Ej: primavera, autopista",value:degF.notes,onInput:ev=>setDegF(f=>({...f,notes:ev.target.value}))}),
           degF.range&&e("div",{style:{background:"#0f172a",borderRadius:"8px",padding:"10px",marginBottom:"12px",display:"flex",justifyContent:"space-between",fontSize:"13px"}},
             e("span",{style:{color:"#94a3b8"}},"SOH a registrar"),
             e("span",{style:{fontWeight:"700",color:"#22c55e"}},((+degF.range/RANGE_OFF)*100).toFixed(1)+"%")
@@ -591,47 +530,168 @@ function App(){
         ])
       ),
 
-      tab==="map"&&e("div",null,
-        e("div",{style:{fontWeight:"700",fontSize:"15px",marginBottom:"6px"}},"Puntos de carga — C. Valenciana"),
-        e("div",{style:{display:"flex",gap:"6px",flexWrap:"wrap",marginBottom:"12px"}},
-          [["all","Todos"],["Sueca","Sueca"],["Puzol","Puzol"],["Sagunto","Sagunto"],["Valencia","Valencia"],["ok","Activos"]].map(([id,lbl2])=>
-            e("button",{key:id,onClick:()=>{setZone(id);setSelSt(null);},style:{padding:"5px 11px",borderRadius:"20px",border:"1px solid #334155",background:zone===id?"#3b82f6":"transparent",color:zone===id?"#fff":"#94a3b8",cursor:"pointer",fontSize:"11px",fontWeight:"600"}},lbl2)
+      /* ── MANTENIMIENTO ── */
+      tab==="mant"&&e("div",null,
+
+        // Resumen
+        e("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"8px",marginBottom:"14px"}},
+          e("div",{style:{background:"#1e293b",borderRadius:"14px",padding:"14px",textAlign:"center"}},
+            e("div",{style:{color:"#94a3b8",fontSize:"11px",marginBottom:"4px"}},"Total registros"),
+            e("div",{style:{fontSize:"22px",fontWeight:"700",color:"#3b82f6"}},mants.length)
+          ),
+          e("div",{style:{background:"#1e293b",borderRadius:"14px",padding:"14px",textAlign:"center"}},
+            e("div",{style:{color:"#94a3b8",fontSize:"11px",marginBottom:"4px"}},"Coste total"),
+            e("div",{style:{fontSize:"22px",fontWeight:"700",color:"#f59e0b"}},mants.reduce((s,m)=>s+(+m.coste||0),0).toFixed(0)+" €")
           )
         ),
-        [
-          {name:"PowerGo",addr:"C/ Arnau de Vilanova 7, Sueca",zone:"Sueca",rating:2.5,status:"warning",notes:"Conector CCS en mal estado.",conn:"CCS, CHAdeMO",lat:39.2062724,lng:-0.3053043},
-          {name:"Cargador Municipal",addr:"Ronda Bernat Alino 57, Sueca",zone:"Sueca",rating:3.0,status:"ok",notes:"Funciona bien.",conn:"CCS, Type 2",lat:39.2037416,lng:-0.3076841},
-          {name:"Fenide Energia",addr:"Placa Ajuntament 10, Sueca",zone:"Sueca",rating:2.3,status:"warning",notes:"Averias frecuentes.",conn:"Type 2",lat:39.2026217,lng:-0.3104931},
-          {name:"Iberdrola Sueca",addr:"Av. Gandient 3, Sueca",zone:"Sueca",rating:null,status:"unknown",notes:"Sin valoraciones.",conn:"Type 2, CCS",lat:39.2044050,lng:-0.316332},
-          {name:"Iberdrola bp pulse Puzol",addr:"Ctra. Barcelona 44, Puzol",zone:"Puzol",rating:3.7,status:"ok",notes:"Junto a Burger King y Mercadona.",conn:"CCS, CHAdeMO",lat:39.623219,lng:-0.304116},
-          {name:"Umbrella Charging Puzol",addr:"Carrer Tarongers, Puzol",zone:"Puzol",rating:5.0,status:"ok",notes:"Mejor valorado de Puzol.",conn:"CCS, Type 2",lat:39.6245924,lng:-0.3040361},
-          {name:"EDP ES Sagunto",addr:"Av. Les Moreres, Sagunto",zone:"Sagunto",rating:3.9,status:"ok",notes:"Mejor valorado de Sagunto.",conn:"CCS, Type 2, CHAdeMO",lat:39.674179,lng:-0.263575},
-          {name:"Iberdrola bp pulse Sagunto",addr:"C/ Periodista Azzati s/n, Sagunto",zone:"Sagunto",rating:2.8,status:"warning",notes:"Periodos fuera de servicio.",conn:"Ultra CCS",lat:39.668097,lng:-0.225118},
-          {name:"Iberdrola IGSA Valencia",addr:"C/ Prof. Beltran Baguena 4, Valencia",zone:"Valencia",rating:4.3,status:"ok",notes:"94 kW. Parking IGSA.",conn:"Ultra CCS",lat:39.4804177,lng:-0.3889125},
-          {name:"Wenea Campanar Valencia",addr:"Av. Pius XII 2, Valencia",zone:"Valencia",rating:null,status:"ok",notes:"Punto 24h.",conn:"CCS, Type 2",lat:39.4811696,lng:-0.3920164},
-          {name:"Wenea Ciutat Vella Valencia",addr:"Pl. Sant Agusti, Valencia",zone:"Valencia",rating:null,status:"ok",notes:"Centro historico.",conn:"CCS, Type 2",lat:39.4686457,lng:-0.3798529},
-          {name:"Iberdrola Roger de Lloria",addr:"C/ Roger de Lloria 10, Valencia",zone:"Valencia",rating:3.0,status:"ok",notes:"Precio varia segun metodo pago.",conn:"CCS, Type 2",lat:39.4692034,lng:-0.3746765},
-        ].filter(s=>zone==="all"?true:zone==="ok"?s.status==="ok":s.zone===zone).map((s,i)=>
-          e("div",{key:i,onClick:()=>setSelSt(selSt?.name===s.name?null:s),style:{background:"#1e293b",borderRadius:"14px",padding:"14px",marginBottom:"10px",cursor:"pointer",border:`1px solid ${selSt?.name===s.name?"#3b82f6":"#334155"}`}},
-            e("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}},
-              e("div",{style:{flex:1}},
-                e("div",{style:{display:"flex",alignItems:"center",gap:"6px",marginBottom:"3px"}},
-                  e("div",{style:{width:"10px",height:"10px",borderRadius:"50%",background:s.status==="ok"?"#22c55e":s.status==="warning"?"#ef4444":"#94a3b8",flexShrink:0}}),
-                  e("span",{style:{fontWeight:"700",fontSize:"13px"}},s.name)
-                ),
-                e("div",{style:{fontSize:"12px",color:"#94a3b8"}},s.addr)
-              ),
-              s.rating&&e("span",{style:{color:"#f59e0b",fontSize:"12px",fontWeight:"600"}},"⭐ "+s.rating)
-            ),
-            selSt?.name===s.name&&e("div",{style:{marginTop:"12px",borderTop:"1px solid #334155",paddingTop:"12px"}},
-              row("Conectores",s.conn),
-              row("Notas",s.notes),
-              e("a",{href:`https://www.google.com/maps/search/?api=1&query=${s.lat},${s.lng}`,target:"_blank",rel:"noopener noreferrer",style:{display:"block",background:"#3b82f6",color:"#fff",borderRadius:"8px",padding:"10px",textAlign:"center",fontWeight:"700",fontSize:"13px",textDecoration:"none",marginTop:"12px"}},"Abrir en Google Maps")
-            )
+
+        // Filtro categorías
+        e("div",{style:{display:"flex",gap:"6px",overflowX:"auto",paddingBottom:"6px",marginBottom:"14px"}},
+          [{id:"todas",label:"Todas",icon:"🔧",color:"#3b82f6"},...MANT_CATS].map(c=>
+            e("button",{key:c.id,onClick:()=>setMantCat(c.id),style:{flexShrink:0,padding:"5px 11px",borderRadius:"20px",border:"1px solid "+(mantCat===c.id?c.color:"#334155"),background:mantCat===c.id?c.color+"22":"transparent",color:mantCat===c.id?c.color:"#94a3b8",cursor:"pointer",fontSize:"11px",fontWeight:"600",whiteSpace:"nowrap"}},c.icon+" "+c.label)
           )
-        )
+        ),
+
+        // Formulario
+        card([
+          e("div",{style:{fontWeight:"700",marginBottom:"14px",fontSize:"14px"}},mantEdit?"✏️ Editando registro":"➕ Nuevo mantenimiento"),
+          lbl("Tipo de mantenimiento"),
+          e("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"6px",marginBottom:"12px"}},
+            MANT_CATS.map(c=>e("button",{key:c.id,onClick:()=>setMantF(f=>({...f,cat:c.id})),style:{padding:"8px 6px",borderRadius:"8px",border:"1px solid "+(mantF.cat===c.id?c.color:"#334155"),background:mantF.cat===c.id?c.color+"22":"transparent",color:mantF.cat===c.id?c.color:"#94a3b8",cursor:"pointer",fontSize:"11px",fontWeight:"600",textAlign:"left"}},c.icon+" "+c.label))
+          ),
+          e("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"10px",marginBottom:"10px"}},
+            e("div",null,lbl("Fecha"),e("input",{style:iS,value:mantF.fecha,onInput:ev=>setMantF(f=>({...f,fecha:ev.target.value}))})),
+            e("div",null,lbl("Km actuales"),e("input",{style:iS,type:"number",placeholder:"45000",value:mantF.km,onInput:ev=>setMantF(f=>({...f,km:ev.target.value}))}))
+          ),
+          e("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"10px",marginBottom:"10px"}},
+            e("div",null,lbl("Taller / Lugar"),e("input",{style:iS,placeholder:"Ej: Talleres García",value:mantF.taller,onInput:ev=>setMantF(f=>({...f,taller:ev.target.value}))})),
+            e("div",null,lbl("Coste (€)"),e("input",{style:iS,type:"number",placeholder:"120",value:mantF.coste,onInput:ev=>setMantF(f=>({...f,coste:ev.target.value}))}))
+          ),
+          e("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"10px",marginBottom:"10px"}},
+            e("div",null,lbl("Próximo (km)"),e("input",{style:iS,type:"number",placeholder:"Ej: 85000",value:mantF.prox_km,onInput:ev=>setMantF(f=>({...f,prox_km:ev.target.value}))})),
+            e("div",null,lbl("Próxima fecha"),e("input",{style:iS,placeholder:"Ej: 15/04/2027",value:mantF.prox_fecha,onInput:ev=>setMantF(f=>({...f,prox_fecha:ev.target.value}))}))
+          ),
+          lbl("Notas"),e("input",{style:{...iS,marginBottom:"12px"},placeholder:"Marca, modelo, observaciones...",value:mantF.notas,onInput:ev=>setMantF(f=>({...f,notas:ev.target.value}))}),
+          e("div",{style:{display:"flex",gap:"8px"}},
+            e("button",{style:{...bP,background:syncing?"#334155":"#3b82f6"},onClick:saveMant,disabled:syncing},syncing?"Guardando...":"Guardar en Sheets"),
+            mantEdit&&e("button",{onClick:()=>{setMantEdit(null);setMantF({cat:"neumaticos",fecha:tod(),km:"",taller:"",coste:"",notas:"",prox_km:"",prox_fecha:""});},style:{...bP,background:"#334155",width:"auto",padding:"10px 14px"}},"✕")
+          )
+        ]),
+
+        // Historial
+        (()=>{
+          const filtrados=mantCat==="todas"?mants:mants.filter(m=>m.categoria===mantCat);
+          if(filtrados.length===0)return e("div",{style:{textAlign:"center",color:"#475569",padding:"24px",fontSize:"13px"}},"Sin registros aún.");
+          return e("div",null,
+            e("div",{style:{fontWeight:"700",fontSize:"13px",color:"#94a3b8",marginBottom:"10px"}},filtrados.length+" registro"+(filtrados.length!==1?"s":"")+" encontrado"+(filtrados.length!==1?"s":"")),
+            filtrados.map(m=>{
+              const cat=MANT_CATS.find(c=>c.id===m.categoria)||MANT_CATS[MANT_CATS.length-1];
+              return e("div",{key:m.id,style:{background:"#1e293b",borderRadius:"14px",padding:"14px",marginBottom:"10px",borderLeft:"3px solid "+cat.color}},
+                e("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:"6px"}},
+                  e("div",null,
+                    e("div",{style:{fontWeight:"700",fontSize:"13px"}},cat.icon+" "+cat.label),
+                    e("div",{style:{fontSize:"11px",color:"#94a3b8",marginTop:"2px"}},m.fecha+(m.km?" · "+Number(m.km).toLocaleString()+" km":""))
+                  ),
+                  e("div",{style:{display:"flex",gap:"5px",alignItems:"center",flexShrink:0}},
+                    m.coste>0&&e("span",{style:{background:"#f59e0b22",color:"#f59e0b",borderRadius:"6px",padding:"2px 7px",fontSize:"11px",fontWeight:"600"}},m.coste+"€"),
+                    e("button",{onClick:()=>{setMantF({cat:m.categoria||"otro",fecha:m.fecha,km:String(m.km),taller:m.taller||"",coste:String(m.coste||""),notas:m.notas||"",prox_km:String(m.prox_km||""),prox_fecha:m.prox_fecha||""});setMantEdit(m.id);window.scrollTo(0,0);},style:{background:"#334155",border:"none",borderRadius:"6px",color:"#94a3b8",cursor:"pointer",padding:"3px 7px",fontSize:"11px"}},"✏"),
+                    e("button",{onClick:()=>delMant(m.id),style:{background:"#7f1d1d",border:"none",borderRadius:"6px",color:"#fca5a5",cursor:"pointer",padding:"3px 7px",fontSize:"11px"}},"✕")
+                  )
+                ),
+                (m.taller||m.notas||m.prox_km||m.prox_fecha)&&e("div",{style:{borderTop:"1px solid #334155",paddingTop:"8px",fontSize:"12px",color:"#94a3b8",display:"flex",flexDirection:"column",gap:"3px"}},
+                  m.taller&&e("span",null,"🔧 "+m.taller),
+                  m.notas&&e("span",null,"📝 "+m.notas),
+                  (m.prox_km||m.prox_fecha)&&e("span",{style:{color:"#f59e0b"}},
+                    "⏭ Próximo: "+(m.prox_km?Number(m.prox_km).toLocaleString()+" km":"")+
+                    (m.prox_km&&m.prox_fecha?" · ":"")+
+                    (m.prox_fecha?m.prox_fecha:"")
+                  )
+                )
+              );
+            })
+          );
+        })()
       ),
 
+      /* ── CARGADORES ── */
+      tab==="map"&&e("div",null,
+
+        // Header + botón añadir
+        e("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"12px"}},
+          e("div",{style:{fontWeight:"700",fontSize:"15px"}},"Puntos de carga"),
+          e("button",{onClick:()=>{setShowCargForm(!showCargForm);setCargEdit(null);setCargF({nombre:"",direccion:"",zona:"Puzol",red:"Iberdrola",conectores:"Type 2, CCS",potencia:"22 kW",notas:"",lat:"",lng:""});},style:{background:"#22c55e22",border:"1px solid #22c55e44",borderRadius:"8px",color:"#22c55e",fontSize:"12px",padding:"6px 12px",cursor:"pointer",fontWeight:"600"}},showCargForm?"✕ Cancelar":"➕ Añadir")
+        ),
+
+        // Formulario añadir/editar cargador
+        showCargForm&&card([
+          e("div",{style:{fontWeight:"700",marginBottom:"14px",fontSize:"14px"}},cargEdit?"✏️ Editando cargador":"➕ Nuevo punto de carga"),
+          lbl("Nombre"),e("input",{style:{...iS,marginBottom:"10px"},placeholder:"Ej: Iberdrola bp pulse Mercadona",value:cargF.nombre,onInput:ev=>setCargF(f=>({...f,nombre:ev.target.value}))}),
+          lbl("Dirección"),e("input",{style:{...iS,marginBottom:"10px"},placeholder:"Ej: Av. de la Constitución 12, Puzol",value:cargF.direccion,onInput:ev=>setCargF(f=>({...f,direccion:ev.target.value}))}),
+          e("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"10px",marginBottom:"10px"}},
+            e("div",null,lbl("Zona"),
+              e("select",{style:iS,value:cargF.zona,onInput:ev=>setCargF(f=>({...f,zona:ev.target.value}))},
+                ZONAS.map(z=>e("option",{key:z,value:z},z))
+              )
+            ),
+            e("div",null,lbl("Red / Operador"),
+              e("select",{style:iS,value:cargF.red,onInput:ev=>setCargF(f=>({...f,red:ev.target.value}))},
+                REDES.map(r=>e("option",{key:r,value:r},r))
+              )
+            )
+          ),
+          e("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"10px",marginBottom:"10px"}},
+            e("div",null,lbl("Conectores"),e("input",{style:iS,placeholder:"Type 2, CCS",value:cargF.conectores,onInput:ev=>setCargF(f=>({...f,conectores:ev.target.value}))})),
+            e("div",null,lbl("Potencia"),e("input",{style:iS,placeholder:"22 kW",value:cargF.potencia,onInput:ev=>setCargF(f=>({...f,potencia:ev.target.value}))}))
+          ),
+          lbl("Notas"),e("input",{style:{...iS,marginBottom:"10px"},placeholder:"Horario, acceso, valoración...",value:cargF.notas,onInput:ev=>setCargF(f=>({...f,notas:ev.target.value}))}),
+          e("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"10px",marginBottom:"12px"}},
+            e("div",null,lbl("Latitud (opcional)"),e("input",{style:iS,placeholder:"39.6232",value:cargF.lat,onInput:ev=>setCargF(f=>({...f,lat:ev.target.value}))})),
+            e("div",null,lbl("Longitud (opcional)"),e("input",{style:iS,placeholder:"-0.3041",value:cargF.lng,onInput:ev=>setCargF(f=>({...f,lng:ev.target.value}))}))
+          ),
+          e("button",{style:{...bP,background:syncing?"#334155":"#22c55e"},onClick:saveCarg,disabled:syncing},syncing?"Guardando...":"Guardar cargador")
+        ]),
+
+        // Botón ver en Electromaps
+        e("a",{href:"https://map.electromaps.com/es/?lat=39.62&lng=-0.35&zoom=11",target:"_blank",rel:"noopener noreferrer",style:{display:"block",background:"#3b82f622",border:"1px solid #3b82f644",borderRadius:"10px",padding:"10px 14px",textAlign:"center",color:"#4a9eff",fontSize:"12px",fontWeight:"600",textDecoration:"none",marginBottom:"14px"}},"🗺️ Ver todos los cargadores en Electromaps →"),
+
+        // Filtro zonas
+        e("div",{style:{display:"flex",gap:"6px",overflowX:"auto",paddingBottom:"4px",marginBottom:"12px"}},
+          ["todas",...ZONAS].map(z=>e("button",{key:z,onClick:()=>setCargZona(z),style:{flexShrink:0,padding:"5px 12px",borderRadius:"20px",border:"1px solid "+(cargZona===z?"#3b82f6":"#334155"),background:cargZona===z?"#3b82f622":"transparent",color:cargZona===z?"#4a9eff":"#94a3b8",cursor:"pointer",fontSize:"11px",fontWeight:"600",whiteSpace:"nowrap"}},z==="todas"?"Todos":z))
+        ),
+
+        // Lista cargadores
+        (()=>{
+          const filtrados=cargZona==="todas"?cargadores:cargadores.filter(c=>c.zona===cargZona);
+          if(filtrados.length===0)return e("div",{style:{textAlign:"center",color:"#475569",padding:"24px",fontSize:"13px"}},"Sin cargadores en esta zona.");
+          const redColor={Iberdrola:"#4a9eff",Repsol:"#ef4444",Endesa:"#22c55e",Wenea:"#a78bfa",Zunder:"#f59e0b",Plenergy:"#60a5fa",EDP:"#34d399",Ayuntamiento:"#94a3b8"};
+          return filtrados.map((c,i)=>{
+            const rc=redColor[c.red]||"#94a3b8";
+            const esRapido=(+String(c.potencia).replace(/[^0-9]/g,""))>=50;
+            return e("div",{key:c.id||i,style:{background:"#1e293b",borderRadius:"14px",padding:"14px",marginBottom:"10px",borderLeft:"3px solid "+rc}},
+              e("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:"6px"}},
+                e("div",{style:{flex:1,marginRight:"8px"}},
+                  e("div",{style:{fontWeight:"700",fontSize:"13px",marginBottom:"2px"}},c.nombre),
+                  e("div",{style:{fontSize:"11px",color:"#94a3b8"}},c.direccion)
+                ),
+                e("div",{style:{display:"flex",gap:"4px",alignItems:"center",flexShrink:0}},
+                  esRapido&&e("span",{style:{background:"#f59e0b22",color:"#f59e0b",borderRadius:"6px",padding:"2px 6px",fontSize:"10px",fontWeight:"600"}},"⚡ Rápido"),
+                  e("button",{onClick:()=>{setCargEdit(c.id);setCargF({nombre:c.nombre,direccion:c.direccion,zona:c.zona||"Puzol",red:c.red||"Iberdrola",conectores:c.conectores||"",potencia:c.potencia||"",notas:c.notas||"",lat:String(c.lat||""),lng:String(c.lng||"")});setShowCargForm(true);window.scrollTo(0,0);},style:{background:"#334155",border:"none",borderRadius:"6px",color:"#94a3b8",cursor:"pointer",padding:"3px 7px",fontSize:"11px"}},"✏"),
+                  e("button",{onClick:()=>delCarg(c.id),style:{background:"#7f1d1d",border:"none",borderRadius:"6px",color:"#fca5a5",cursor:"pointer",padding:"3px 7px",fontSize:"11px"}},"✕")
+                )
+              ),
+              e("div",{style:{display:"flex",gap:"8px",flexWrap:"wrap",marginBottom:"6px"}},
+                e("span",{style:{background:rc+"22",color:rc,borderRadius:"6px",padding:"2px 8px",fontSize:"11px",fontWeight:"600"}},c.red),
+                e("span",{style:{background:"#334155",color:"#94a3b8",borderRadius:"6px",padding:"2px 8px",fontSize:"11px"}},c.conectores),
+                c.potencia&&e("span",{style:{background:"#334155",color:"#94a3b8",borderRadius:"6px",padding:"2px 8px",fontSize:"11px"}},c.potencia)
+              ),
+              c.notas&&e("div",{style:{fontSize:"12px",color:"#94a3b8",marginBottom:"6px"}},"📝 "+c.notas),
+              (c.lat&&c.lng)&&e("a",{href:`https://www.google.com/maps/search/?api=1&query=${c.lat},${c.lng}`,target:"_blank",rel:"noopener noreferrer",style:{display:"block",background:"#3b82f6",color:"#fff",borderRadius:"8px",padding:"8px",textAlign:"center",fontWeight:"700",fontSize:"12px",textDecoration:"none"}},"📍 Abrir en Google Maps")
+            );
+          });
+        })()
+      ),
+
+      /* ── IA ADVISOR ── */
       tab==="advisor"&&e("div",{style:{display:"flex",flexDirection:"column",height:"calc(100vh - 210px)"}},
         card([
           e("div",{style:{fontWeight:"700",fontSize:"14px",marginBottom:"4px"}},"Smart Advisor — e-up! 2014"),
@@ -654,6 +714,7 @@ function App(){
         )
       ),
 
+      /* ── STATS ── */
       tab==="stats"&&e("div",null,
         e("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"10px",marginBottom:"14px"}},
           [["Registros",regs.length,"#3b82f6"],["Km totales",regs.reduce((s,l)=>s+(+l.km),0)+" km","#22c55e"],["En ECO",regs.filter(l=>l.modo==="eco").length,"#22c55e"],["SOH",soh?soh+"%":"--",soh?sC:"#475569"]].map(([l,v,c])=>
@@ -703,7 +764,7 @@ function App(){
   );
 }
 
-ReactDOM.render(React.createElement(App,null), document.getElementById("root"));
+ReactDOM.render(React.createElement(App,null),document.getElementById("root"));
 </script>
 </body>
 </html>
