@@ -14,6 +14,65 @@
 body{background:#0f172a;color:#f1f5f9;font-family:system-ui,sans-serif}
 #root{max-width:480px;margin:0 auto;padding-bottom:70px}
 input,button{font-family:inherit}
+
+/* ── PANEL DE INSTRUMENTOS ── */
+.panel-wrap{background:#0d0f14;border-radius:16px;padding:16px;color:#fff}
+.panel-topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.panel-brand{font-size:10px;letter-spacing:3px;color:#4a9eff;text-transform:uppercase;font-weight:500}
+.panel-status{font-size:11px;color:#22c55e;display:flex;align-items:center;gap:5px}
+.panel-dot{width:7px;height:7px;border-radius:50%;background:#22c55e;display:inline-block}
+
+/* Batería - anillo central */
+.bat-ring-wrap{position:relative;width:150px;height:150px;margin:0 auto}
+.bat-ring-wrap svg{width:150px;height:150px}
+.bat-overlay{position:absolute;top:50%;left:50%;transform:translate(-50%,-54%);text-align:center;pointer-events:none}
+.bat-pct-num{font-size:34px;font-weight:600;color:#fff;line-height:1}
+.bat-pct-sym{font-size:13px;color:#6b7280}
+.bat-sublabel{font-size:10px;color:#6b7280;letter-spacing:1px;text-transform:uppercase;margin-top:2px}
+.bat-range-pill{background:#0d1f0d;border:1px solid #22c55e44;border-radius:20px;padding:5px 14px;font-size:12px;color:#22c55e;font-weight:500;text-align:center;margin-top:8px}
+
+/* Velocímetro */
+.speedo-container{display:flex;flex-direction:column;align-items:center}
+.speed-num{font-size:40px;font-weight:500;color:#fff;line-height:1;text-align:center;margin-top:4px}
+.speed-unit{font-size:11px;color:#6b7280;text-align:center}
+
+/* Cards métricas */
+.metric-card{background:#161b25;border-radius:10px;padding:10px 13px;border:1px solid #1e2535}
+.metric-lbl{font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px}
+.metric-val{font-size:19px;font-weight:500;color:#fff;line-height:1}
+.metric-unit{font-size:11px;color:#6b7280;margin-left:2px}
+.rpm-bar-bg{background:#1e2535;border-radius:4px;height:5px;width:100%;overflow:hidden;margin-top:5px}
+.rpm-bar-fill{height:5px;border-radius:4px;background:linear-gradient(90deg,#4a9eff,#22c55e);transition:width .4s}
+
+/* Grid principal del panel */
+.panel-main{display:grid;grid-template-columns:1fr 160px 1fr;gap:12px;align-items:center}
+.panel-left,.panel-right{display:flex;flex-direction:column;gap:10px}
+.panel-center{display:flex;flex-direction:column;align-items:center}
+
+/* Alertas del panel */
+.panel-alerts{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;justify-content:center}
+.pal{font-size:10px;padding:3px 9px;border-radius:20px}
+.pal-ok{background:#0a1f0a;border:1px solid #22c55e44;color:#22c55e}
+.pal-warn{background:#2a1f0a;border:1px solid #f59e0b44;color:#f59e0b}
+.pal-info{background:#0a1a2a;border:1px solid #4a9eff44;color:#4a9eff}
+.pal-err{background:#2a0a0a;border:1px solid #ef444444;color:#ef4444}
+
+/* Botón actualizar velocidad */
+.panel-edit-row{display:flex;gap:8px;margin-top:12px;justify-content:center}
+.panel-edit-btn{background:transparent;border:1px solid #2a3347;border-radius:8px;color:#9ca3af;font-size:11px;padding:5px 12px;cursor:pointer;transition:all .15s}
+.panel-edit-btn:hover{background:#1e2535;color:#fff}
+
+/* Modal velocidad */
+.pmodal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);align-items:flex-end;justify-content:center;z-index:9998;padding-bottom:80px}
+.pmodal-overlay.open{display:flex}
+.pmodal{background:#161b25;border:1px solid #2a3347;border-radius:16px 16px 16px 16px;padding:20px;width:100%;max-width:460px}
+.pmodal h3{font-size:14px;font-weight:500;color:#fff;margin-bottom:14px}
+.pmodal label{font-size:11px;color:#9ca3af;display:block;margin-bottom:3px}
+.pmodal .val-row{display:flex;justify-content:space-between;font-size:12px;color:#fff;margin-bottom:12px}
+.pmodal input[type=range]{width:100%}
+.pmodal-btns{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}
+.pmbtn-c{background:transparent;border:1px solid #2a3347;border-radius:8px;color:#9ca3af;padding:7px 16px;cursor:pointer;font-size:13px;font-family:inherit}
+.pmbtn-s{background:#4a9eff;border:none;border-radius:8px;color:#fff;padding:7px 16px;cursor:pointer;font-size:13px;font-weight:500;font-family:inherit}
 </style>
 </head>
 <body>
@@ -62,12 +121,186 @@ async function apiPost(action,data){
 const iS = {background:"#0f172a",border:"1px solid #334155",borderRadius:"8px",color:"#f1f5f9",padding:"8px 12px",width:"100%",fontSize:"14px",boxSizing:"border-box"};
 const bP = {background:"#3b82f6",color:"#fff",border:"none",borderRadius:"8px",padding:"10px 16px",cursor:"pointer",fontWeight:"600",fontSize:"14px",width:"100%"};
 
+/* ════════════════════════════════════════
+   COMPONENTE: Panel de instrumentos
+   Recibe todos los datos de la app padre
+════════════════════════════════════════ */
+function PanelInstrumentos({bat, regs, sohs}) {
+  const [speed, setSpeed] = useState(0);
+  const [rpm, setRpm] = useState(0);
+  const [showModal, setShowModal] = useState(false);
+  const [tmpSpeed, setTmpSpeed] = useState(0);
+  const [tmpRpm, setTmpRpm] = useState(0);
+
+  // Datos calculados desde los datos reales de Sheets
+  const bC = gBC(bat);
+  const eR = Math.round((bat/100)*112);                                                  // autonomía estimada
+  const kwh = ((bat/100)*BAT).toFixed(1);                                                // kWh disponibles
+  const aC = regs.length ? (regs.reduce((s,l)=>s+(+l.consumo),0)/regs.length).toFixed(1) : null;
+  const ld = sohs[0];
+  const soh = ld ? ld.soh : null;
+  const lastReg = regs[0];
+  const regenTotal = regs.length ? (regs.reduce((s,l)=>s+(+l.km * 0.012),0)).toFixed(1) : "0.0"; // estimación
+
+  // Arco velocímetro SVG (semicírculo 160px)
+  const ARC_LEN = 220;
+  const arcFill = (speed / 160) * ARC_LEN;
+  const arcOffset = ARC_LEN - arcFill;
+
+  // Anillo batería
+  const CIRC = 364.4;
+  const batOffset = CIRC - (bat / 100) * CIRC;
+
+  // Color batería para el anillo
+  const ringColor = bat > 50 ? "#22c55e" : bat > 20 ? "#f59e0b" : "#ef4444";
+
+  // Alertas dinámicas
+  const alerts = [];
+  if (bat > 55) alerts.push({cls:"pal-ok", txt:"OK para 120 km"});
+  else if (bat > 20) alerts.push({cls:"pal-warn", txt:"Batería baja"});
+  else alerts.push({cls:"pal-err", txt:"¡Carga urgente!"});
+  if (soh) alerts.push({cls: soh>=85?"pal-ok":soh>=70?"pal-warn":"pal-err", txt:"SOH "+soh+"%"});
+  if (speed > 0) alerts.push({cls:"pal-info", txt:speed+" km/h"});
+  const hora = new Date().toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"});
+  alerts.push({cls:"pal-info", txt:hora});
+
+  const openModal = () => { setTmpSpeed(speed); setTmpRpm(rpm); setShowModal(true); };
+  const saveModal = () => { setSpeed(tmpSpeed); setRpm(tmpRpm); setShowModal(false); };
+
+  return e("div", null,
+    e("div", {className:"panel-wrap"},
+
+      // Top bar
+      e("div", {className:"panel-topbar"},
+        e("span", {className:"panel-brand"}, "VW e-up! · Panel"),
+        e("span", {className:"panel-status"},
+          e("span", {className:"panel-dot"}),
+          regs.length+" registros"
+        )
+      ),
+
+      // Grid principal
+      e("div", {className:"panel-main"},
+
+        // ── IZQUIERDA: velocímetro + RPM + consumo ──
+        e("div", {className:"panel-left"},
+          e("div", {className:"speedo-container"},
+            e("svg", {width:"130", height:"80", viewBox:"0 0 160 100"},
+              e("path", {d:"M 20 90 A 70 70 0 0 1 140 90", fill:"none", stroke:"#1e2535", strokeWidth:"10", strokeLinecap:"round"}),
+              e("path", {d:"M 20 90 A 70 70 0 0 1 140 90", fill:"none", stroke:"#4a9eff", strokeWidth:"10", strokeLinecap:"round",
+                strokeDasharray:ARC_LEN, strokeDashoffset:arcOffset, style:{transition:"stroke-dashoffset .4s"}})
+            ),
+            e("div", {className:"speed-num"}, speed),
+            e("div", {className:"speed-unit"}, "km/h")
+          ),
+          e("div", {className:"metric-card"},
+            e("div", {className:"metric-lbl"}, "Motor"),
+            e("div", {className:"metric-val"}, rpm.toLocaleString(), e("span",{className:"metric-unit"}," rpm")),
+            e("div", {className:"rpm-bar-bg"},
+              e("div", {className:"rpm-bar-fill", style:{width:Math.min(rpm/12000*100,100)+"%"}})
+            )
+          ),
+          e("div", {className:"metric-card"},
+            e("div", {className:"metric-lbl"}, "Consumo medio"),
+            e("div", {className:"metric-val"}, aC||"--", e("span",{className:"metric-unit"}, aC?" kWh/100":"")),
+          )
+        ),
+
+        // ── CENTRO: anillo batería ──
+        e("div", {className:"panel-center"},
+          e("div", {className:"bat-ring-wrap"},
+            e("svg", {viewBox:"0 0 140 140"},
+              e("circle", {cx:"70", cy:"70", r:"58", fill:"none", stroke:"#1e2535", strokeWidth:"12"}),
+              e("circle", {cx:"70", cy:"70", r:"58", fill:"none",
+                stroke: ringColor, strokeWidth:"12", strokeLinecap:"round",
+                strokeDasharray: CIRC, strokeDashoffset: batOffset,
+                transform:"rotate(-90 70 70)",
+                style:{transition:"stroke-dashoffset .5s, stroke .5s"}})
+            ),
+            e("div", {className:"bat-overlay"},
+              e("div", {className:"bat-pct-num", style:{color: ringColor}}, bat),
+              e("div", {className:"bat-pct-sym"}, "%"),
+              e("div", {className:"bat-sublabel"}, "Batería")
+            )
+          ),
+          e("div", {className:"bat-range-pill"}, "≈ "+eR+" km")
+        ),
+
+        // ── DERECHA: kWh, autonomía, regen, SOH ──
+        e("div", {className:"panel-right"},
+          e("div", {className:"metric-card"},
+            e("div", {className:"metric-lbl"}, "kWh disponibles"),
+            e("div", {className:"metric-val"}, kwh, e("span",{className:"metric-unit"}," kWh"))
+          ),
+          e("div", {className:"metric-card"},
+            e("div", {className:"metric-lbl"}, "Autonomía"),
+            e("div", {className:"metric-val"}, eR, e("span",{className:"metric-unit"}," km"))
+          ),
+          e("div", {className:"metric-card"},
+            e("div", {className:"metric-lbl"}, "SOH batería"),
+            e("div", {className:"metric-val",
+              style:{color: soh ? (soh>=85?"#22c55e":soh>=70?"#f59e0b":"#ef4444") : "#475569"}},
+              soh ? soh+"%" : "—"
+            )
+          )
+        )
+      ),
+
+      // Alertas
+      e("div", {className:"panel-alerts"},
+        alerts.map((a,i) => e("span",{key:i, className:"pal "+a.cls}, a.txt))
+      ),
+
+      // Último registro si existe
+      lastReg && e("div", {style:{marginTop:"12px",background:"#0d0f14",borderRadius:"10px",padding:"10px 12px",display:"flex",justifyContent:"space-between",alignItems:"center"}},
+        e("span",{style:{fontSize:"11px",color:"#6b7280"}},"Último · "+lastReg.fecha),
+        e("div",{style:{display:"flex",gap:"12px"}},
+          [
+            [lastReg.bateria_salida+"%→"+lastReg.bateria_llegada+"%","Bat","#4a9eff"],
+            [lastReg.km+" km","Dist","#22c55e"],
+            [lastReg.consumo+" kWh/100","Cons", lastReg.consumo>18?"#ef4444":lastReg.consumo>15?"#f59e0b":"#22c55e"]
+          ].map(([v,l,c])=>e("div",{key:l,style:{textAlign:"center"}},
+            e("div",{style:{fontSize:"12px",fontWeight:"600",color:c}},v),
+            e("div",{style:{fontSize:"9px",color:"#6b7280"}},l)
+          ))
+        )
+      ),
+
+      // Botón editar marcha
+      e("div", {className:"panel-edit-row"},
+        e("button", {className:"panel-edit-btn", onClick: openModal}, "⚡ Actualizar velocidad / RPM"),
+      )
+    ),
+
+    // Modal velocidad / RPM
+    e("div", {className:"pmodal-overlay"+(showModal?" open":""), onClick: ev=>{ if(ev.target.className.includes("pmodal-overlay")) setShowModal(false); }},
+      e("div", {className:"pmodal"},
+        e("h3", null, "Velocidad y RPM actuales"),
+        e("label", null, "Velocidad (km/h)"),
+        e("div", {className:"val-row"}, e("span",null,"0"), e("span",{style:{color:"#4a9eff",fontWeight:"500"}},tmpSpeed+" km/h"), e("span",null,"160")),
+        e("input", {type:"range", min:0, max:160, value:tmpSpeed, onInput: ev=>setTmpSpeed(+ev.target.value)}),
+        e("div", {style:{marginTop:"12px"}}),
+        e("label", null, "RPM motor"),
+        e("div", {className:"val-row"}, e("span",null,"0"), e("span",{style:{color:"#4a9eff",fontWeight:"500"}},tmpRpm.toLocaleString()+" rpm"), e("span",null,"12000")),
+        e("input", {type:"range", min:0, max:12000, step:100, value:tmpRpm, onInput: ev=>setTmpRpm(+ev.target.value)}),
+        e("div", {className:"pmodal-btns"},
+          e("button", {className:"pmbtn-c", onClick:()=>setShowModal(false)}, "Cancelar"),
+          e("button", {className:"pmbtn-s", onClick:saveModal}, "Guardar")
+        )
+      )
+    )
+  );
+}
+
+/* ════════════════════════════════════════
+   APP PRINCIPAL
+════════════════════════════════════════ */
 function App(){
   const [regs,setRegs] = useState([]);
   const [sohs,setSohs] = useState([]);
   const [bat,setBat] = useState(85);
-  const [tab,setTab] = useState("home");
-  const [status,setStatus] = useState("loading"); // loading|ok|error
+  const [tab,setTab] = useState("panel");  // abre en Panel por defecto
+  const [status,setStatus] = useState("loading");
   const [syncing,setSyncing] = useState(false);
   const [toast,setToast] = useState(null);
   const [dayF,setDayF] = useState({date:tod(),s:"",e:"",km:"",mode:"eco",loc:"none",season:getSeason()});
@@ -160,8 +393,8 @@ function App(){
     const msgs = [...aiMsgs,{r:"u",t:msg}];
     setAiMsgs(msgs);setAiLoad(true);
     const ac = regs.length?(regs.reduce((s,l)=>s+(+l.consumo),0)/regs.length).toFixed(1):"15.5";
-    const ld = sohs[0];
-    const sys = `Eres experto en VE y asistente del VW e-up! 2014 de Paola. DATOS: Bateria 16kWh | Autonomia 133km | SOH:${ld?ld.soh+"%":"no medido"} | Consumo:${ac}kWh/100km | Bateria actual:${bat}% | Registros:${regs.length} | Km:${regs.reduce((s,l)=>s+(+l.km),0)} | Uso:120km/dia L-V | Zona Sueca-Valencia. Responde en espanol, max 3 parrafos cortos.`;
+    const ld2 = sohs[0];
+    const sys = `Eres experto en VE y asistente del VW e-up! 2014 de Paola. DATOS: Bateria 16kWh | Autonomia 133km | SOH:${ld2?ld2.soh+"%":"no medido"} | Consumo:${ac}kWh/100km | Bateria actual:${bat}% | Registros:${regs.length} | Km:${regs.reduce((s,l)=>s+(+l.km),0)} | Uso:120km/dia L-V | Zona Sueca-Valencia. Responde en espanol, max 3 parrafos cortos.`;
     try{
       const r = await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,system:sys,messages:msgs.map(m=>({role:m.r==="u"?"user":"assistant",content:m.t}))})});
       const d = await r.json();
@@ -178,7 +411,9 @@ function App(){
   const soh = ld?ld.soh:null;
   const sC = soh>=85?"#22c55e":soh>=70?"#f59e0b":"#ef4444";
   const pC = dayF.s&&dayF.e&&dayF.km?((((+dayF.s-+dayF.e)/100)*BAT)/+dayF.km*100).toFixed(1):null;
-  const TABS = [["home","Inicio"],["diary","Diario"],["battery","Bateria"],["map","Cargadores"],["advisor","IA"],["stats","Stats"]];
+
+  // Pestañas — Panel añadida al principio
+  const TABS = [["panel","Panel"],["home","Inicio"],["diary","Diario"],["battery","Bateria"],["map","Cargadores"],["advisor","IA"],["stats","Stats"]];
 
   if(status==="loading") return e("div",{style:{background:"#0f172a",minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",color:"#f1f5f9"}},
     e("div",{style:{fontSize:"48px",marginBottom:"16px"}},"⚡"),
@@ -221,11 +456,19 @@ function App(){
     ),
 
     e("div",{style:{display:"flex",margin:"12px 16px 0",background:"#1e293b",borderRadius:"10px",padding:"3px",gap:"2px",overflowX:"auto"}},
-      TABS.map(([id,lbl2])=>e("button",{key:id,onClick:()=>setTab(id),style:{flex:"0 0 auto",padding:"7px 10px",border:"none",borderRadius:"7px",cursor:"pointer",fontSize:"11px",fontWeight:"600",whiteSpace:"nowrap",background:tab===id?"#3b82f6":"transparent",color:tab===id?"#fff":"#94a3b8"}},lbl2))
+      TABS.map(([id,lbl2])=>e("button",{key:id,onClick:()=>setTab(id),style:{flex:"0 0 auto",padding:"7px 10px",border:"none",borderRadius:"7px",cursor:"pointer",fontSize:"11px",fontWeight:"600",whiteSpace:"nowrap",background:tab===id?(id==="panel"?"#1d4ed8":"#3b82f6"):"transparent",color:tab===id?"#fff":"#94a3b8"}},lbl2))
     ),
 
     e("div",{style:{padding:"16px"}},
 
+      /* ══════════════════════════════
+         PESTAÑA: PANEL DE INSTRUMENTOS
+      ══════════════════════════════ */
+      tab==="panel" && e(PanelInstrumentos, {bat, regs, sohs}),
+
+      /* ══════════════════════════════
+         PESTAÑA: INICIO
+      ══════════════════════════════ */
       tab==="home" && e("div",null,
         card([
           e("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"10px"}},
@@ -271,6 +514,9 @@ function App(){
         )
       ),
 
+      /* ══════════════════════════════
+         PESTAÑA: DIARIO
+      ══════════════════════════════ */
       tab==="diary" && e("div",null,
         card([
           e("div",{style:{fontWeight:"700",marginBottom:"14px"}},editId?"Editando registro":"Registro del trayecto"),
@@ -333,6 +579,9 @@ function App(){
           ])
       ),
 
+      /* ══════════════════════════════
+         PESTAÑA: BATERÍA / SOH
+      ══════════════════════════════ */
       tab==="battery" && e("div",null,
         card([
           e("div",{style:{fontWeight:"700",marginBottom:"6px"}},"Salud de la bateria (SOH)"),
@@ -380,6 +629,9 @@ function App(){
         ])
       ),
 
+      /* ══════════════════════════════
+         PESTAÑA: MAPA CARGADORES
+      ══════════════════════════════ */
       tab==="map" && e("div",null,
         e("div",{style:{fontWeight:"700",fontSize:"15px",marginBottom:"6px"}},"Puntos de carga — C. Valenciana"),
         e("div",{style:{display:"flex",gap:"6px",flexWrap:"wrap",marginBottom:"12px"}},
@@ -421,6 +673,9 @@ function App(){
         )
       ),
 
+      /* ══════════════════════════════
+         PESTAÑA: IA ADVISOR
+      ══════════════════════════════ */
       tab==="advisor" && e("div",{style:{display:"flex",flexDirection:"column",height:"calc(100vh - 210px)"}},
         card([
           e("div",{style:{fontWeight:"700",fontSize:"14px",marginBottom:"4px"}},"Smart Advisor — e-up! 2014"),
@@ -443,6 +698,9 @@ function App(){
         )
       ),
 
+      /* ══════════════════════════════
+         PESTAÑA: STATS
+      ══════════════════════════════ */
       tab==="stats" && e("div",null,
         e("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"10px",marginBottom:"14px"}},
           [["Registros",regs.length,"#3b82f6"],["Km totales",regs.reduce((s,l)=>s+(+l.km),0)+" km","#22c55e"],["En ECO",regs.filter(l=>l.modo==="eco").length,"#22c55e"],["SOH",soh?soh+"%":"--",soh?sC:"#475569"]].map(([l,v,c])=>
