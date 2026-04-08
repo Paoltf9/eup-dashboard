@@ -1,5 +1,4 @@
-import { h, render, useState, useEffect, useRef, useCallback } from "https://esm.sh/preact@10.19.2/compat";const BAT = 16, RANGE = 133;
-const gBC = p => p >= 60 ? "#22c55e" : p >= 30 ? "#f59e0b" : "#ef4444";
+import { createElement as h, render } from "https://esm.sh/react@18.2.0+react-dom@18.2.0";const gBC = p => p >= 60 ? "#22c55e" : p >= 30 ? "#f59e0b" : "#ef4444";
 const tod = () => new Date().toLocaleDateString("es-ES");
 
 const API = "https://script.google.com/macros/s/AKfycbxmY4q36pwRZyZM-cEAEWNTChhKcXVlLB61avSQTkrtp42MHuX7fim20SpF8FSPR4ir/exec";
