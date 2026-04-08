@@ -16,63 +16,69 @@ body{background:#0f172a;color:#f1f5f9;font-family:system-ui,sans-serif}
 input,button{font-family:inherit}
 
 /* ── PANEL DE INSTRUMENTOS ── */
-.panel-wrap{background:#0d0f14;border-radius:16px;padding:16px;color:#fff}
-.panel-topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
-.panel-brand{font-size:10px;letter-spacing:3px;color:#4a9eff;text-transform:uppercase;font-weight:500}
-.panel-status{font-size:11px;color:#22c55e;display:flex;align-items:center;gap:5px}
-.panel-dot{width:7px;height:7px;border-radius:50%;background:#22c55e;display:inline-block}
+.pw{background:#0d0f14;border-radius:16px;padding:16px;color:#fff}
+.ptb{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.pbrand{font-size:10px;letter-spacing:3px;color:#4a9eff;text-transform:uppercase;font-weight:500}
+.pst{font-size:11px;color:#22c55e;display:flex;align-items:center;gap:5px}
+.pdot{width:7px;height:7px;border-radius:50%;background:#22c55e;display:inline-block}
 
-/* Batería - anillo central */
-.bat-ring-wrap{position:relative;width:150px;height:150px;margin:0 auto}
-.bat-ring-wrap svg{width:150px;height:150px}
-.bat-overlay{position:absolute;top:50%;left:50%;transform:translate(-50%,-54%);text-align:center;pointer-events:none}
-.bat-pct-num{font-size:34px;font-weight:600;color:#fff;line-height:1}
-.bat-pct-sym{font-size:13px;color:#6b7280}
-.bat-sublabel{font-size:10px;color:#6b7280;letter-spacing:1px;text-transform:uppercase;margin-top:2px}
-.bat-range-pill{background:#0d1f0d;border:1px solid #22c55e44;border-radius:20px;padding:5px 14px;font-size:12px;color:#22c55e;font-weight:500;text-align:center;margin-top:8px}
+/* Fila top: speedo | ring | rpm */
+.ptr{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:14px}
 
 /* Velocímetro */
-.speedo-container{display:flex;flex-direction:column;align-items:center}
-.speed-num{font-size:40px;font-weight:500;color:#fff;line-height:1;text-align:center;margin-top:4px}
-.speed-unit{font-size:11px;color:#6b7280;text-align:center}
+.spd{display:flex;flex-direction:column;align-items:center;flex:1}
+.spd-n{font-size:34px;font-weight:500;color:#fff;line-height:1;text-align:center;margin-top:2px}
+.spd-u{font-size:10px;color:#6b7280;text-align:center}
 
-/* Cards métricas */
-.metric-card{background:#161b25;border-radius:10px;padding:10px 13px;border:1px solid #1e2535}
-.metric-lbl{font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px}
-.metric-val{font-size:19px;font-weight:500;color:#fff;line-height:1}
-.metric-unit{font-size:11px;color:#6b7280;margin-left:2px}
-.rpm-bar-bg{background:#1e2535;border-radius:4px;height:5px;width:100%;overflow:hidden;margin-top:5px}
-.rpm-bar-fill{height:5px;border-radius:4px;background:linear-gradient(90deg,#4a9eff,#22c55e);transition:width .4s}
+/* Anillo batería */
+.brw{position:relative;width:136px;height:136px;flex-shrink:0}
+.brw svg{width:136px;height:136px}
+.bov{position:absolute;top:50%;left:50%;transform:translate(-50%,-54%);text-align:center;pointer-events:none}
+.bpn{font-size:30px;font-weight:600;line-height:1}
+.bps{font-size:12px;color:#6b7280}
+.bsl{font-size:9px;color:#6b7280;letter-spacing:1px;text-transform:uppercase;margin-top:1px}
+.brp{border-radius:20px;padding:4px 12px;font-size:11px;font-weight:500;text-align:center;margin-top:6px;border:1px solid #22c55e44;background:#0d1f0d;color:#22c55e}
 
-/* Grid principal del panel */
-.panel-main{display:grid;grid-template-columns:1fr 160px 1fr;gap:12px;align-items:center}
-.panel-left,.panel-right{display:flex;flex-direction:column;gap:10px}
-.panel-center{display:flex;flex-direction:column;align-items:center}
+/* RPM lateral */
+.rpmw{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px}
+.rpmbig{font-size:20px;font-weight:500;color:#fff;line-height:1}
+.rpml{font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:1px}
+.rpmbg{background:#1e2535;border-radius:4px;height:5px;width:75%;overflow:hidden;margin-top:4px}
+.rpmfill{height:5px;border-radius:4px;background:linear-gradient(90deg,#4a9eff,#22c55e);transition:width .4s}
 
-/* Alertas del panel */
-.panel-alerts{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;justify-content:center}
+/* Grid métricas 2x2 */
+.pmg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.mc{background:#161b25;border-radius:10px;padding:10px 12px;border:1px solid #1e2535}
+.ml{font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px}
+.mv{font-size:18px;font-weight:500;color:#fff;line-height:1}
+.mu{font-size:10px;color:#6b7280;margin-left:2px}
+
+/* Alertas */
+.pal-row{display:flex;gap:7px;margin-bottom:10px;flex-wrap:wrap;justify-content:center}
 .pal{font-size:10px;padding:3px 9px;border-radius:20px}
 .pal-ok{background:#0a1f0a;border:1px solid #22c55e44;color:#22c55e}
 .pal-warn{background:#2a1f0a;border:1px solid #f59e0b44;color:#f59e0b}
 .pal-info{background:#0a1a2a;border:1px solid #4a9eff44;color:#4a9eff}
 .pal-err{background:#2a0a0a;border:1px solid #ef444444;color:#ef4444}
 
-/* Botón actualizar velocidad */
-.panel-edit-row{display:flex;gap:8px;margin-top:12px;justify-content:center}
-.panel-edit-btn{background:transparent;border:1px solid #2a3347;border-radius:8px;color:#9ca3af;font-size:11px;padding:5px 12px;cursor:pointer;transition:all .15s}
-.panel-edit-btn:hover{background:#1e2535;color:#fff}
+/* Último registro */
+.lastreg{background:#111318;border-radius:10px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
 
-/* Modal velocidad */
-.pmodal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);align-items:flex-end;justify-content:center;z-index:9998;padding-bottom:80px}
-.pmodal-overlay.open{display:flex}
-.pmodal{background:#161b25;border:1px solid #2a3347;border-radius:16px 16px 16px 16px;padding:20px;width:100%;max-width:460px}
-.pmodal h3{font-size:14px;font-weight:500;color:#fff;margin-bottom:14px}
-.pmodal label{font-size:11px;color:#9ca3af;display:block;margin-bottom:3px}
-.pmodal .val-row{display:flex;justify-content:space-between;font-size:12px;color:#fff;margin-bottom:12px}
-.pmodal input[type=range]{width:100%}
-.pmodal-btns{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}
-.pmbtn-c{background:transparent;border:1px solid #2a3347;border-radius:8px;color:#9ca3af;padding:7px 16px;cursor:pointer;font-size:13px;font-family:inherit}
-.pmbtn-s{background:#4a9eff;border:none;border-radius:8px;color:#fff;padding:7px 16px;cursor:pointer;font-size:13px;font-weight:500;font-family:inherit}
+/* Botón editar */
+.pedit{background:transparent;border:1px solid #2a3347;border-radius:8px;color:#9ca3af;font-size:11px;padding:6px 14px;cursor:pointer;width:100%}
+.pedit:hover{background:#1e2535;color:#fff}
+
+/* Modal */
+.pmo{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);align-items:flex-end;justify-content:center;z-index:9998;padding:0 12px 80px}
+.pmo.open{display:flex}
+.pmob{background:#161b25;border:1px solid #2a3347;border-radius:16px;padding:20px;width:100%;max-width:460px}
+.pmob h3{font-size:14px;font-weight:500;color:#fff;margin-bottom:14px}
+.pmob label{font-size:11px;color:#9ca3af;display:block;margin-bottom:3px}
+.pmob .vr{display:flex;justify-content:space-between;font-size:12px;color:#fff;margin-bottom:10px}
+.pmob input[type=range]{width:100%}
+.pmobbtns{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}
+.pmbc{background:transparent;border:1px solid #2a3347;border-radius:8px;color:#9ca3af;padding:7px 16px;cursor:pointer;font-size:13px;font-family:inherit}
+.pmbs{background:#4a9eff;border:none;border-radius:8px;color:#fff;padding:7px 16px;cursor:pointer;font-size:13px;font-weight:500;font-family:inherit}
 </style>
 </head>
 <body>
@@ -82,7 +88,7 @@ const {useState,useEffect,useRef,useCallback} = React;
 const e = React.createElement;
 
 const API = "https://script.google.com/macros/s/AKfycbxmY4q36pwRZyZM-cEAEWNTChhKcXVlLB61avSQTkrtp42MHuX7fim20SpF8FSPR4ir/exec";
-const BAT = 16, RANGE = 133;
+const BAT_KWH = 16, RANGE_OFF = 133;
 const tod = () => new Date().toLocaleDateString("es-ES");
 const gBC = p => p>=60?"#22c55e":p>=30?"#f59e0b":"#ef4444";
 
@@ -98,167 +104,138 @@ const CLOCS = [
   {id:"public",label:"Publico",color:"#f59e0b"},
 ];
 const SEASONS = [
-  {id:"invierno",label:"Invierno",color:"#60a5fa",months:[12,1,2],rangeEst:"75-95 km"},
-  {id:"primavera",label:"Primavera",color:"#34d399",months:[3,4,5],rangeEst:"100-115 km"},
-  {id:"verano",label:"Verano",color:"#fbbf24",months:[6,7,8],rangeEst:"105-120 km"},
-  {id:"otono",label:"Otono",color:"#f97316",months:[9,10,11],rangeEst:"95-110 km"},
+  {id:"invierno",label:"Invierno",color:"#60a5fa",months:[12,1,2]},
+  {id:"primavera",label:"Primavera",color:"#34d399",months:[3,4,5]},
+  {id:"verano",label:"Verano",color:"#fbbf24",months:[6,7,8]},
+  {id:"otono",label:"Otono",color:"#f97316",months:[9,10,11]},
 ];
+const getSeason = () => { const m=new Date().getMonth()+1; return SEASONS.find(s=>s.months.includes(m))?.id||"primavera"; };
 
-const getSeason = () => {
-  const m = new Date().getMonth()+1;
-  return SEASONS.find(s=>s.months.includes(m))?.id||"primavera";
-};
+async function apiGet(){ const r=await fetch(API+"?action=getAll"); return r.json(); }
+async function apiPost(action,data){ const r=await fetch(API,{method:"POST",body:JSON.stringify({action,data})}); return r.json(); }
 
-async function apiGet(){
-  const r = await fetch(API+"?action=getAll");
-  return r.json();
-}
-async function apiPost(action,data){
-  const r = await fetch(API,{method:"POST",body:JSON.stringify({action,data})});
-  return r.json();
-}
+const iS={background:"#0f172a",border:"1px solid #334155",borderRadius:"8px",color:"#f1f5f9",padding:"8px 12px",width:"100%",fontSize:"14px",boxSizing:"border-box"};
+const bP={background:"#3b82f6",color:"#fff",border:"none",borderRadius:"8px",padding:"10px 16px",cursor:"pointer",fontWeight:"600",fontSize:"14px",width:"100%"};
 
-const iS = {background:"#0f172a",border:"1px solid #334155",borderRadius:"8px",color:"#f1f5f9",padding:"8px 12px",width:"100%",fontSize:"14px",boxSizing:"border-box"};
-const bP = {background:"#3b82f6",color:"#fff",border:"none",borderRadius:"8px",padding:"10px 16px",cursor:"pointer",fontWeight:"600",fontSize:"14px",width:"100%"};
-
-/* ════════════════════════════════════════
-   COMPONENTE: Panel de instrumentos
-   Recibe todos los datos de la app padre
-════════════════════════════════════════ */
-function PanelInstrumentos({bat, regs, sohs}) {
+/* ═══════════════════════════════════
+   PANEL DE INSTRUMENTOS
+═══════════════════════════════════ */
+function Panel({bat, regs, sohs}) {
   const [speed, setSpeed] = useState(0);
   const [rpm, setRpm] = useState(0);
-  const [showModal, setShowModal] = useState(false);
-  const [tmpSpeed, setTmpSpeed] = useState(0);
-  const [tmpRpm, setTmpRpm] = useState(0);
+  const [modal, setModal] = useState(false);
+  const [ts, setTs] = useState(0);
+  const [tr, setTr] = useState(0);
 
-  // Datos calculados desde los datos reales de Sheets
-  const bC = gBC(bat);
-  const eR = Math.round((bat/100)*112);                                                  // autonomía estimada
-  const kwh = ((bat/100)*BAT).toFixed(1);                                                // kWh disponibles
+  const ringColor = gBC(bat);
+  const eR = Math.round((bat/100)*112);
+  const kwh = ((bat/100)*BAT_KWH).toFixed(1);
   const aC = regs.length ? (regs.reduce((s,l)=>s+(+l.consumo),0)/regs.length).toFixed(1) : null;
-  const ld = sohs[0];
-  const soh = ld ? ld.soh : null;
+  const soh = sohs[0]?.soh || null;
   const lastReg = regs[0];
-  const regenTotal = regs.length ? (regs.reduce((s,l)=>s+(+l.km * 0.012),0)).toFixed(1) : "0.0"; // estimación
 
-  // Arco velocímetro SVG (semicírculo 160px)
-  const ARC_LEN = 220;
-  const arcFill = (speed / 160) * ARC_LEN;
-  const arcOffset = ARC_LEN - arcFill;
-
-  // Anillo batería
   const CIRC = 364.4;
-  const batOffset = CIRC - (bat / 100) * CIRC;
+  const batOffset = CIRC - (bat/100)*CIRC;
+  const ARC = 220;
+  const arcOffset = ARC - (speed/160)*ARC;
 
-  // Color batería para el anillo
-  const ringColor = bat > 50 ? "#22c55e" : bat > 20 ? "#f59e0b" : "#ef4444";
-
-  // Alertas dinámicas
-  const alerts = [];
-  if (bat > 55) alerts.push({cls:"pal-ok", txt:"OK para 120 km"});
-  else if (bat > 20) alerts.push({cls:"pal-warn", txt:"Batería baja"});
-  else alerts.push({cls:"pal-err", txt:"¡Carga urgente!"});
-  if (soh) alerts.push({cls: soh>=85?"pal-ok":soh>=70?"pal-warn":"pal-err", txt:"SOH "+soh+"%"});
-  if (speed > 0) alerts.push({cls:"pal-info", txt:speed+" km/h"});
   const hora = new Date().toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"});
-  alerts.push({cls:"pal-info", txt:hora});
-
-  const openModal = () => { setTmpSpeed(speed); setTmpRpm(rpm); setShowModal(true); };
-  const saveModal = () => { setSpeed(tmpSpeed); setRpm(tmpRpm); setShowModal(false); };
+  const alerts = [];
+  if (bat>55) alerts.push({c:"pal-ok",t:"OK para 120 km"});
+  else if (bat>20) alerts.push({c:"pal-warn",t:"Batería baja"});
+  else alerts.push({c:"pal-err",t:"¡Carga urgente!"});
+  if (soh) alerts.push({c:soh>=85?"pal-ok":soh>=70?"pal-warn":"pal-err", t:"SOH "+soh+"%"});
+  alerts.push({c:"pal-info",t:hora});
 
   return e("div", null,
-    e("div", {className:"panel-wrap"},
-
+    e("div", {className:"pw"},
       // Top bar
-      e("div", {className:"panel-topbar"},
-        e("span", {className:"panel-brand"}, "VW e-up! · Panel"),
-        e("span", {className:"panel-status"},
-          e("span", {className:"panel-dot"}),
-          regs.length+" registros"
-        )
+      e("div", {className:"ptb"},
+        e("span", {className:"pbrand"}, "VW e-up! · Panel"),
+        e("span", {className:"pst"}, e("span",{className:"pdot"}), regs.length+" registros")
       ),
 
-      // Grid principal
-      e("div", {className:"panel-main"},
-
-        // ── IZQUIERDA: velocímetro + RPM + consumo ──
-        e("div", {className:"panel-left"},
-          e("div", {className:"speedo-container"},
-            e("svg", {width:"130", height:"80", viewBox:"0 0 160 100"},
-              e("path", {d:"M 20 90 A 70 70 0 0 1 140 90", fill:"none", stroke:"#1e2535", strokeWidth:"10", strokeLinecap:"round"}),
-              e("path", {d:"M 20 90 A 70 70 0 0 1 140 90", fill:"none", stroke:"#4a9eff", strokeWidth:"10", strokeLinecap:"round",
-                strokeDasharray:ARC_LEN, strokeDashoffset:arcOffset, style:{transition:"stroke-dashoffset .4s"}})
-            ),
-            e("div", {className:"speed-num"}, speed),
-            e("div", {className:"speed-unit"}, "km/h")
+      // ── Fila: speedo | anillo | rpm ──
+      e("div", {className:"ptr"},
+        // Velocímetro
+        e("div", {className:"spd"},
+          e("svg", {width:"86", height:"54", viewBox:"0 0 160 100"},
+            e("path", {d:"M20 90 A70 70 0 0 1 140 90", fill:"none", stroke:"#1e2535", strokeWidth:"10", strokeLinecap:"round"}),
+            e("path", {d:"M20 90 A70 70 0 0 1 140 90", fill:"none", stroke:"#4a9eff", strokeWidth:"10", strokeLinecap:"round",
+              strokeDasharray:ARC, strokeDashoffset:arcOffset, style:{transition:"stroke-dashoffset .4s"}})
           ),
-          e("div", {className:"metric-card"},
-            e("div", {className:"metric-lbl"}, "Motor"),
-            e("div", {className:"metric-val"}, rpm.toLocaleString(), e("span",{className:"metric-unit"}," rpm")),
-            e("div", {className:"rpm-bar-bg"},
-              e("div", {className:"rpm-bar-fill", style:{width:Math.min(rpm/12000*100,100)+"%"}})
-            )
-          ),
-          e("div", {className:"metric-card"},
-            e("div", {className:"metric-lbl"}, "Consumo medio"),
-            e("div", {className:"metric-val"}, aC||"--", e("span",{className:"metric-unit"}, aC?" kWh/100":"")),
-          )
+          e("div", {className:"spd-n"}, speed),
+          e("div", {className:"spd-u"}, "km/h")
         ),
 
-        // ── CENTRO: anillo batería ──
-        e("div", {className:"panel-center"},
-          e("div", {className:"bat-ring-wrap"},
+        // Anillo batería
+        e("div", {style:{display:"flex",flexDirection:"column",alignItems:"center"}},
+          e("div", {className:"brw"},
             e("svg", {viewBox:"0 0 140 140"},
-              e("circle", {cx:"70", cy:"70", r:"58", fill:"none", stroke:"#1e2535", strokeWidth:"12"}),
-              e("circle", {cx:"70", cy:"70", r:"58", fill:"none",
-                stroke: ringColor, strokeWidth:"12", strokeLinecap:"round",
-                strokeDasharray: CIRC, strokeDashoffset: batOffset,
+              e("circle", {cx:"70",cy:"70",r:"58",fill:"none",stroke:"#1e2535",strokeWidth:"12"}),
+              e("circle", {cx:"70",cy:"70",r:"58",fill:"none",
+                stroke:ringColor, strokeWidth:"12", strokeLinecap:"round",
+                strokeDasharray:CIRC, strokeDashoffset:batOffset,
                 transform:"rotate(-90 70 70)",
                 style:{transition:"stroke-dashoffset .5s, stroke .5s"}})
             ),
-            e("div", {className:"bat-overlay"},
-              e("div", {className:"bat-pct-num", style:{color: ringColor}}, bat),
-              e("div", {className:"bat-pct-sym"}, "%"),
-              e("div", {className:"bat-sublabel"}, "Batería")
+            e("div", {className:"bov"},
+              e("div", {className:"bpn", style:{color:ringColor}}, bat),
+              e("div", {className:"bps"}, "%"),
+              e("div", {className:"bsl"}, "Batería")
             )
           ),
-          e("div", {className:"bat-range-pill"}, "≈ "+eR+" km")
+          e("div", {className:"brp"}, "≈ "+eR+" km")
         ),
 
-        // ── DERECHA: kWh, autonomía, regen, SOH ──
-        e("div", {className:"panel-right"},
-          e("div", {className:"metric-card"},
-            e("div", {className:"metric-lbl"}, "kWh disponibles"),
-            e("div", {className:"metric-val"}, kwh, e("span",{className:"metric-unit"}," kWh"))
-          ),
-          e("div", {className:"metric-card"},
-            e("div", {className:"metric-lbl"}, "Autonomía"),
-            e("div", {className:"metric-val"}, eR, e("span",{className:"metric-unit"}," km"))
-          ),
-          e("div", {className:"metric-card"},
-            e("div", {className:"metric-lbl"}, "SOH batería"),
-            e("div", {className:"metric-val",
-              style:{color: soh ? (soh>=85?"#22c55e":soh>=70?"#f59e0b":"#ef4444") : "#475569"}},
-              soh ? soh+"%" : "—"
-            )
+        // RPM
+        e("div", {className:"rpmw"},
+          e("div", {className:"rpml"}, "Motor"),
+          e("div", {className:"rpmbig"}, rpm>0?rpm.toLocaleString():"0"),
+          e("div", {className:"rpml"}, "rpm"),
+          e("div", {className:"rpmbg"},
+            e("div", {className:"rpmfill", style:{width:Math.min(rpm/12000*100,100)+"%"}})
+          )
+        )
+      ),
+
+      // ── Grid métricas 2x2 ──
+      e("div", {className:"pmg"},
+        e("div", {className:"mc"},
+          e("div",{className:"ml"},"kWh disponibles"),
+          e("div",{className:"mv"}, kwh, e("span",{className:"mu"}," kWh"))
+        ),
+        e("div", {className:"mc"},
+          e("div",{className:"ml"},"Autonomía"),
+          e("div",{className:"mv"}, eR, e("span",{className:"mu"}," km"))
+        ),
+        e("div", {className:"mc"},
+          e("div",{className:"ml"},"Consumo medio"),
+          e("div",{className:"mv"}, aC||"--", e("span",{className:"mu"}, aC?" kWh/100":""))
+        ),
+        e("div", {className:"mc"},
+          e("div",{className:"ml"},"SOH batería"),
+          e("div",{className:"mv", style:{color:soh?(soh>=85?"#22c55e":soh>=70?"#f59e0b":"#ef4444"):"#475569"}},
+            soh?soh+"%":"—"
           )
         )
       ),
 
       // Alertas
-      e("div", {className:"panel-alerts"},
-        alerts.map((a,i) => e("span",{key:i, className:"pal "+a.cls}, a.txt))
+      e("div", {className:"pal-row"},
+        alerts.map((a,i)=>e("span",{key:i,className:"pal "+a.c},a.t))
       ),
 
-      // Último registro si existe
-      lastReg && e("div", {style:{marginTop:"12px",background:"#0d0f14",borderRadius:"10px",padding:"10px 12px",display:"flex",justifyContent:"space-between",alignItems:"center"}},
-        e("span",{style:{fontSize:"11px",color:"#6b7280"}},"Último · "+lastReg.fecha),
-        e("div",{style:{display:"flex",gap:"12px"}},
-          [
-            [lastReg.bateria_salida+"%→"+lastReg.bateria_llegada+"%","Bat","#4a9eff"],
-            [lastReg.km+" km","Dist","#22c55e"],
-            [lastReg.consumo+" kWh/100","Cons", lastReg.consumo>18?"#ef4444":lastReg.consumo>15?"#f59e0b":"#22c55e"]
+      // Último registro
+      lastReg && e("div", {className:"lastreg"},
+        e("div",{style:{fontSize:"11px",color:"#6b7280"}},
+          e("div",null,"Último trayecto"),
+          e("div",null,lastReg.fecha)
+        ),
+        e("div",{style:{display:"flex",gap:"14px"}},
+          [[lastReg.bateria_salida+"%→"+lastReg.bateria_llegada+"%","Bat","#4a9eff"],
+           [lastReg.km+" km","Dist","#22c55e"],
+           [lastReg.consumo+" kWh","Cons",lastReg.consumo>18?"#ef4444":lastReg.consumo>15?"#f59e0b":"#22c55e"]
           ].map(([v,l,c])=>e("div",{key:l,style:{textAlign:"center"}},
             e("div",{style:{fontSize:"12px",fontWeight:"600",color:c}},v),
             e("div",{style:{fontSize:"9px",color:"#6b7280"}},l)
@@ -266,61 +243,60 @@ function PanelInstrumentos({bat, regs, sohs}) {
         )
       ),
 
-      // Botón editar marcha
-      e("div", {className:"panel-edit-row"},
-        e("button", {className:"panel-edit-btn", onClick: openModal}, "⚡ Actualizar velocidad / RPM"),
+      // Botón
+      e("button", {className:"pedit", onClick:()=>{setTs(speed);setTr(rpm);setModal(true);}},
+        "⚡ Actualizar velocidad / RPM"
       )
     ),
 
-    // Modal velocidad / RPM
-    e("div", {className:"pmodal-overlay"+(showModal?" open":""), onClick: ev=>{ if(ev.target.className.includes("pmodal-overlay")) setShowModal(false); }},
-      e("div", {className:"pmodal"},
-        e("h3", null, "Velocidad y RPM actuales"),
-        e("label", null, "Velocidad (km/h)"),
-        e("div", {className:"val-row"}, e("span",null,"0"), e("span",{style:{color:"#4a9eff",fontWeight:"500"}},tmpSpeed+" km/h"), e("span",null,"160")),
-        e("input", {type:"range", min:0, max:160, value:tmpSpeed, onInput: ev=>setTmpSpeed(+ev.target.value)}),
-        e("div", {style:{marginTop:"12px"}}),
-        e("label", null, "RPM motor"),
-        e("div", {className:"val-row"}, e("span",null,"0"), e("span",{style:{color:"#4a9eff",fontWeight:"500"}},tmpRpm.toLocaleString()+" rpm"), e("span",null,"12000")),
-        e("input", {type:"range", min:0, max:12000, step:100, value:tmpRpm, onInput: ev=>setTmpRpm(+ev.target.value)}),
-        e("div", {className:"pmodal-btns"},
-          e("button", {className:"pmbtn-c", onClick:()=>setShowModal(false)}, "Cancelar"),
-          e("button", {className:"pmbtn-s", onClick:saveModal}, "Guardar")
+    // Modal
+    e("div", {className:"pmo"+(modal?" open":""), onClick:ev=>{if(ev.currentTarget===ev.target)setModal(false);}},
+      e("div", {className:"pmob"},
+        e("h3",null,"Velocidad y RPM"),
+        e("label",null,"Velocidad (km/h)"),
+        e("div",{className:"vr"},e("span",null,"0"),e("span",{style:{color:"#4a9eff",fontWeight:"500"}},ts+" km/h"),e("span",null,"160")),
+        e("input",{type:"range",min:0,max:160,value:ts,onInput:ev=>setTs(+ev.target.value)}),
+        e("div",{style:{marginTop:"12px"}}),
+        e("label",null,"RPM motor"),
+        e("div",{className:"vr"},e("span",null,"0"),e("span",{style:{color:"#4a9eff",fontWeight:"500"}},ts>0?Math.round(ts/160*8000).toLocaleString():tr+" rpm"),e("span",null,"12000")),
+        e("input",{type:"range",min:0,max:12000,step:100,value:tr,onInput:ev=>setTr(+ev.target.value)}),
+        e("div",{className:"pmobbtns"},
+          e("button",{className:"pmbc",onClick:()=>setModal(false)},"Cancelar"),
+          e("button",{className:"pmbs",onClick:()=>{setSpeed(ts);setRpm(tr);setModal(false);}},"Guardar")
         )
       )
     )
   );
 }
 
-/* ════════════════════════════════════════
+/* ═══════════════════════════════════
    APP PRINCIPAL
-════════════════════════════════════════ */
+═══════════════════════════════════ */
 function App(){
-  const [regs,setRegs] = useState([]);
-  const [sohs,setSohs] = useState([]);
-  const [bat,setBat] = useState(85);
-  const [tab,setTab] = useState("panel");  // abre en Panel por defecto
-  const [status,setStatus] = useState("loading");
-  const [syncing,setSyncing] = useState(false);
-  const [toast,setToast] = useState(null);
-  const [dayF,setDayF] = useState({date:tod(),s:"",e:"",km:"",mode:"eco",loc:"none",season:getSeason()});
-  const [editId,setEditId] = useState(null);
-  const [degF,setDegF] = useState({range:"",date:tod(),notes:""});
-  const [zone,setZone] = useState("Sueca");
-  const [selSt,setSelSt] = useState(null);
-  const [aiMsgs,setAiMsgs] = useState([{r:"a",t:"Hola Paola! Soy tu asistente del VW e-up! 2014. Tus datos se guardan en Google Sheets."}]);
-  const [aiIn,setAiIn] = useState("");
-  const [aiLoad,setAiLoad] = useState(false);
-  const chatRef = useRef(null);
+  const [regs,setRegs]=useState([]);
+  const [sohs,setSohs]=useState([]);
+  const [bat,setBat]=useState(85);
+  const [tab,setTab]=useState("panel");
+  const [status,setStatus]=useState("loading");
+  const [syncing,setSyncing]=useState(false);
+  const [toast,setToast]=useState(null);
+  const [dayF,setDayF]=useState({date:tod(),s:"",e:"",km:"",mode:"eco",loc:"none",season:getSeason()});
+  const [editId,setEditId]=useState(null);
+  const [degF,setDegF]=useState({range:"",date:tod(),notes:""});
+  const [zone,setZone]=useState("Sueca");
+  const [selSt,setSelSt]=useState(null);
+  const [aiMsgs,setAiMsgs]=useState([{r:"a",t:"Hola Paola! Soy tu asistente del VW e-up! 2014. Tus datos se guardan en Google Sheets."}]);
+  const [aiIn,setAiIn]=useState("");
+  const [aiLoad,setAiLoad]=useState(false);
+  const chatRef=useRef(null);
 
   useEffect(()=>{if(chatRef.current)chatRef.current.scrollTop=chatRef.current.scrollHeight;},[aiMsgs]);
+  const showToast=(msg,ok=true)=>{setToast({msg,ok});setTimeout(()=>setToast(null),3000);};
 
-  const showToast = (msg,ok=true)=>{setToast({msg,ok});setTimeout(()=>setToast(null),3000);};
-
-  const load = useCallback(async()=>{
+  const load=useCallback(async()=>{
     setStatus("loading");
     try{
-      const d = await apiGet();
+      const d=await apiGet();
       if(!d.ok) throw new Error();
       setRegs((d.registros||[]).sort((a,b)=>b.id-a.id));
       setSohs((d.soh||[]).sort((a,b)=>b.id-a.id));
@@ -331,25 +307,24 @@ function App(){
 
   useEffect(()=>{load();},[]);
 
-  const saveBat = async v=>{
+  const saveBat=async v=>{
     setBat(v);
     try{await apiPost("saveConfig",{clave:"bateria_actual",valor:String(v)});}catch{}
   };
 
-  const saveDay = async()=>{
+  const saveDay=async()=>{
     if(!dayF.s||!dayF.e||!dayF.km){showToast("Rellena todos los campos",false);return;}
     setSyncing(true);
-    const cons = ((((+dayF.s-+dayF.e)/100)*BAT)/+dayF.km*100).toFixed(1);
-    const payload = {fecha:dayF.date,bateria_salida:+dayF.s,bateria_llegada:+dayF.e,km:+dayF.km,consumo:+cons,modo:dayF.mode,carga:dayF.loc,temporada:dayF.season};
+    const cons=((((+dayF.s-+dayF.e)/100)*BAT_KWH)/+dayF.km*100).toFixed(1);
+    const payload={fecha:dayF.date,bateria_salida:+dayF.s,bateria_llegada:+dayF.e,km:+dayF.km,consumo:+cons,modo:dayF.mode,carga:dayF.loc,temporada:dayF.season};
     try{
-      let res;
       if(editId){
         await apiPost("updateRegistro",{id:editId,...payload});
         setRegs(r=>r.map(x=>x.id===editId?{...x,...payload,id:editId}:x));
         setEditId(null);
         showToast("Registro actualizado");
       }else{
-        res = await apiPost("saveRegistro",payload);
+        const res=await apiPost("saveRegistro",payload);
         if(!res.ok) throw new Error();
         setRegs(r=>[{id:res.id,...payload},...r]);
         showToast("Guardado en Google Sheets");
@@ -360,25 +335,25 @@ function App(){
     setSyncing(false);
   };
 
-  const delReg = async id=>{
+  const delReg=async id=>{
     setSyncing(true);
     try{await apiPost("deleteRegistro",{id});setRegs(r=>r.filter(x=>x.id!==id));showToast("Eliminado");}
     catch{showToast("Error",false);}
     setSyncing(false);
   };
 
-  const editReg = log=>{
+  const editReg=log=>{
     setDayF({date:log.fecha,s:String(log.bateria_salida),e:String(log.bateria_llegada),km:String(log.km),mode:log.modo,loc:log.carga,season:log.temporada||getSeason()});
     setEditId(log.id);setTab("diary");window.scrollTo(0,0);
   };
 
-  const saveDeg = async()=>{
+  const saveDeg=async()=>{
     if(!degF.range){showToast("Introduce la autonomia real",false);return;}
     setSyncing(true);
-    const soh = ((+degF.range/RANGE)*100).toFixed(1);
-    const kwh = ((+degF.range/RANGE)*BAT).toFixed(2);
+    const soh=((+degF.range/RANGE_OFF)*100).toFixed(1);
+    const kwh=((+degF.range/RANGE_OFF)*BAT_KWH).toFixed(2);
     try{
-      const res = await apiPost("saveSOH",{fecha:degF.date,autonomia_real:+degF.range,soh:+soh,kwh_usables:+kwh,notas:degF.notes});
+      const res=await apiPost("saveSOH",{fecha:degF.date,autonomia_real:+degF.range,soh:+soh,kwh_usables:+kwh,notas:degF.notes});
       if(!res.ok) throw new Error();
       setSohs(s=>[{id:res.id,fecha:degF.date,autonomia_real:+degF.range,soh:+soh,kwh_usables:+kwh,notas:degF.notes},...s]);
       setDegF({range:"",date:tod(),notes:""});
@@ -387,33 +362,32 @@ function App(){
     setSyncing(false);
   };
 
-  const sendAI = async()=>{
+  const sendAI=async()=>{
     if(!aiIn.trim()||aiLoad) return;
-    const msg = aiIn.trim();setAiIn("");
-    const msgs = [...aiMsgs,{r:"u",t:msg}];
+    const msg=aiIn.trim();setAiIn("");
+    const msgs=[...aiMsgs,{r:"u",t:msg}];
     setAiMsgs(msgs);setAiLoad(true);
-    const ac = regs.length?(regs.reduce((s,l)=>s+(+l.consumo),0)/regs.length).toFixed(1):"15.5";
-    const ld2 = sohs[0];
-    const sys = `Eres experto en VE y asistente del VW e-up! 2014 de Paola. DATOS: Bateria 16kWh | Autonomia 133km | SOH:${ld2?ld2.soh+"%":"no medido"} | Consumo:${ac}kWh/100km | Bateria actual:${bat}% | Registros:${regs.length} | Km:${regs.reduce((s,l)=>s+(+l.km),0)} | Uso:120km/dia L-V | Zona Sueca-Valencia. Responde en espanol, max 3 parrafos cortos.`;
+    const ac=regs.length?(regs.reduce((s,l)=>s+(+l.consumo),0)/regs.length).toFixed(1):"15.5";
+    const ld2=sohs[0];
+    const sys=`Eres experto en VE y asistente del VW e-up! 2014 de Paola. DATOS: Bateria 16kWh | Autonomia 133km | SOH:${ld2?ld2.soh+"%":"no medido"} | Consumo:${ac}kWh/100km | Bateria actual:${bat}% | Registros:${regs.length} | Km:${regs.reduce((s,l)=>s+(+l.km),0)} | Uso:120km/dia L-V | Zona Sueca-Valencia. Responde en espanol, max 3 parrafos cortos.`;
     try{
-      const r = await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,system:sys,messages:msgs.map(m=>({role:m.r==="u"?"user":"assistant",content:m.t}))})});
-      const d = await r.json();
+      const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,system:sys,messages:msgs.map(m=>({role:m.r==="u"?"user":"assistant",content:m.t}))})});
+      const d=await r.json();
       setAiMsgs([...msgs,{r:"a",t:d.content?.map(c=>c.text||"").join("")||"Error."}]);
     }catch{setAiMsgs([...msgs,{r:"a",t:"No se pudo conectar."}]);}
     setAiLoad(false);
   };
 
-  const bC = gBC(bat);
-  const eR = Math.round((bat/100)*112);
-  const aK = ((bat/100)*BAT).toFixed(1);
-  const aC = regs.length?(regs.reduce((s,l)=>s+(+l.consumo),0)/regs.length).toFixed(1):"--";
-  const ld = sohs[0];
-  const soh = ld?ld.soh:null;
-  const sC = soh>=85?"#22c55e":soh>=70?"#f59e0b":"#ef4444";
-  const pC = dayF.s&&dayF.e&&dayF.km?((((+dayF.s-+dayF.e)/100)*BAT)/+dayF.km*100).toFixed(1):null;
+  const bC=gBC(bat);
+  const eR=Math.round((bat/100)*112);
+  const aK=((bat/100)*BAT_KWH).toFixed(1);
+  const aC=regs.length?(regs.reduce((s,l)=>s+(+l.consumo),0)/regs.length).toFixed(1):"--";
+  const ld=sohs[0];
+  const soh=ld?ld.soh:null;
+  const sC=soh>=85?"#22c55e":soh>=70?"#f59e0b":"#ef4444";
+  const pC=dayF.s&&dayF.e&&dayF.km?((((+dayF.s-+dayF.e)/100)*BAT_KWH)/+dayF.km*100).toFixed(1):null;
 
-  // Pestañas — Panel añadida al principio
-  const TABS = [["panel","Panel"],["home","Inicio"],["diary","Diario"],["battery","Bateria"],["map","Cargadores"],["advisor","IA"],["stats","Stats"]];
+  const TABS=[["panel","Panel"],["home","Inicio"],["diary","Diario"],["battery","Bateria"],["map","Cargadores"],["advisor","IA"],["stats","Stats"]];
 
   if(status==="loading") return e("div",{style:{background:"#0f172a",minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",color:"#f1f5f9"}},
     e("div",{style:{fontSize:"48px",marginBottom:"16px"}},"⚡"),
@@ -430,16 +404,16 @@ function App(){
     )
   );
 
-  const card = (children,style={}) => e("div",{style:{background:"#1e293b",borderRadius:"16px",padding:"18px",marginBottom:"14px",...style}},children);
-  const lbl = text => e("label",{style:{fontSize:"12px",color:"#94a3b8",display:"block",marginBottom:"4px"}},text);
-  const row = (label,value,color="#f1f5f9") => e("div",{style:{display:"flex",justifyContent:"space-between",padding:"6px 0",borderBottom:"1px solid #334155",fontSize:"13px"}},
+  const card=(children,style={})=>e("div",{style:{background:"#1e293b",borderRadius:"16px",padding:"18px",marginBottom:"14px",...style}},children);
+  const lbl=text=>e("label",{style:{fontSize:"12px",color:"#94a3b8",display:"block",marginBottom:"4px"}},text);
+  const row=(label,value,color="#f1f5f9")=>e("div",{style:{display:"flex",justifyContent:"space-between",padding:"6px 0",borderBottom:"1px solid #334155",fontSize:"13px"}},
     e("span",{style:{color:"#94a3b8",flexShrink:0,marginRight:"8px"}},label),
     e("span",{style:{fontWeight:"600",color}},value)
   );
 
   return e("div",{style:{background:"#0f172a",minHeight:"100vh",color:"#f1f5f9",fontFamily:"system-ui,sans-serif",maxWidth:"480px",margin:"0 auto",paddingBottom:"70px"}},
 
-    toast && e("div",{style:{position:"fixed",top:"16px",left:"50%",transform:"translateX(-50%)",zIndex:9999,background:toast.ok?"#14532d":"#7f1d1d",border:`1px solid ${toast.ok?"#22c55e":"#ef4444"}`,color:"#fff",borderRadius:"10px",padding:"10px 20px",fontSize:"13px",fontWeight:"600",whiteSpace:"nowrap"}},toast.msg),
+    toast&&e("div",{style:{position:"fixed",top:"16px",left:"50%",transform:"translateX(-50%)",zIndex:9999,background:toast.ok?"#14532d":"#7f1d1d",border:`1px solid ${toast.ok?"#22c55e":"#ef4444"}`,color:"#fff",borderRadius:"10px",padding:"10px 20px",fontSize:"13px",fontWeight:"600",whiteSpace:"nowrap"}},toast.msg),
 
     e("div",{style:{padding:"16px 16px 0",display:"flex",alignItems:"center",justifyContent:"space-between"}},
       e("div",{style:{display:"flex",alignItems:"center",gap:"10px"}},
@@ -461,15 +435,9 @@ function App(){
 
     e("div",{style:{padding:"16px"}},
 
-      /* ══════════════════════════════
-         PESTAÑA: PANEL DE INSTRUMENTOS
-      ══════════════════════════════ */
-      tab==="panel" && e(PanelInstrumentos, {bat, regs, sohs}),
+      tab==="panel"&&e(Panel,{bat,regs,sohs}),
 
-      /* ══════════════════════════════
-         PESTAÑA: INICIO
-      ══════════════════════════════ */
-      tab==="home" && e("div",null,
+      tab==="home"&&e("div",null,
         card([
           e("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"10px"}},
             e("span",{style:{color:"#94a3b8",fontSize:"13px"}},"Bateria actual"),
@@ -494,7 +462,7 @@ function App(){
           e("div",{style:{fontWeight:"700"}},bat>=55?"OK para trayecto diario (120 km)":"Bateria insuficiente para 120 km"),
           e("div",{style:{color:"#94a3b8",fontSize:"12px",marginTop:"4px"}},"Minimo 55% · Actual "+bat+"%")
         ),
-        regs[0] && card([
+        regs[0]&&card([
           e("div",{style:{fontWeight:"700",marginBottom:"10px",fontSize:"14px"}},"Ultimo registro — "+regs[0].fecha),
           e("div",{style:{display:"flex"}},
             [["Bateria",`${regs[0].bateria_salida}%→${regs[0].bateria_llegada}%`,"#3b82f6"],["Km",regs[0].km,"#22c55e"],["kWh/100",regs[0].consumo,regs[0].consumo>18?"#ef4444":regs[0].consumo>15?"#f59e0b":"#22c55e"]].map(([l,v,c])=>
@@ -514,10 +482,7 @@ function App(){
         )
       ),
 
-      /* ══════════════════════════════
-         PESTAÑA: DIARIO
-      ══════════════════════════════ */
-      tab==="diary" && e("div",null,
+      tab==="diary"&&e("div",null,
         card([
           e("div",{style:{fontWeight:"700",marginBottom:"14px"}},editId?"Editando registro":"Registro del trayecto"),
           lbl("Fecha"),
@@ -540,18 +505,18 @@ function App(){
           e("div",{style:{display:"flex",gap:"6px",flexWrap:"wrap",marginBottom:"12px"}},
             CLOCS.map(l=>e("button",{key:l.id,onClick:()=>setDayF(f=>({...f,loc:l.id})),style:{flex:1,padding:"8px 4px",borderRadius:"8px",border:"none",cursor:"pointer",fontSize:"11px",fontWeight:"600",minWidth:"58px",background:dayF.loc===l.id?l.color:"#334155",color:dayF.loc===l.id?"#fff":"#94a3b8"}},l.label))
           ),
-          pC && e("div",{style:{background:"#0f172a",borderRadius:"8px",padding:"10px",marginBottom:"12px",display:"flex",justifyContent:"space-between",fontSize:"13px"}},
+          pC&&e("div",{style:{background:"#0f172a",borderRadius:"8px",padding:"10px",marginBottom:"12px",display:"flex",justifyContent:"space-between",fontSize:"13px"}},
             e("span",{style:{color:"#94a3b8"}},"Consumo estimado"),
             e("span",{style:{fontWeight:"700",color:+pC>18?"#ef4444":+pC>15?"#f59e0b":"#22c55e"}},pC+" kWh/100km")
           ),
           e("div",{style:{display:"flex",gap:"8px"}},
             e("button",{style:{...bP,background:syncing?"#334155":"#3b82f6"},onClick:saveDay,disabled:syncing},syncing?"Guardando...":"Guardar en Sheets"),
-            editId && e("button",{onClick:()=>{setEditId(null);setDayF({date:tod(),s:"",e:"",km:"",mode:"eco",loc:"none",season:getSeason()});},style:{...bP,background:"#334155",width:"auto",padding:"10px 14px"}},"X")
+            editId&&e("button",{onClick:()=>{setEditId(null);setDayF({date:tod(),s:"",e:"",km:"",mode:"eco",loc:"none",season:getSeason()});},style:{...bP,background:"#334155",width:"auto",padding:"10px 14px"}},"X")
           )
         ]),
         regs.length===0
-          ? e("div",{style:{textAlign:"center",color:"#475569",padding:"30px"}},"Sin registros aun.")
-          : card([
+          ?e("div",{style:{textAlign:"center",color:"#475569",padding:"30px"}},"Sin registros aun.")
+          :card([
             e("div",{style:{fontWeight:"700",marginBottom:"14px"}},"Historial — "+regs.length+" registros"),
             regs.map(log=>{
               const m=MODES.find(md=>md.id===log.modo)||MODES[1];
@@ -579,14 +544,11 @@ function App(){
           ])
       ),
 
-      /* ══════════════════════════════
-         PESTAÑA: BATERÍA / SOH
-      ══════════════════════════════ */
-      tab==="battery" && e("div",null,
+      tab==="battery"&&e("div",null,
         card([
           e("div",{style:{fontWeight:"700",marginBottom:"6px"}},"Salud de la bateria (SOH)"),
           e("div",{style:{color:"#94a3b8",fontSize:"12px",marginBottom:"14px"}},"Carga al 100% y anota cuantos km reales alcanzas hasta llegar a 0%."),
-          soh ? e("div",null,
+          soh?e("div",null,
             e("div",{style:{textAlign:"center",marginBottom:"16px"}},
               e("div",{style:{fontSize:"54px",fontWeight:"800",color:sC}},soh+"%"),
               e("div",{style:{color:"#94a3b8",fontSize:"13px"}},"Estado de salud estimado"),
@@ -601,7 +563,7 @@ function App(){
               ),
               [70,85].map(mk=>e("div",{key:mk,style:{position:"absolute",left:`${mk}%`,top:0,bottom:0,width:"2px",background:"#475569"}}))
             )
-          ) : e("div",{style:{textAlign:"center",padding:"16px",color:"#475569",fontSize:"13px"}},"Sin mediciones. Registra la primera abajo.")
+          ):e("div",{style:{textAlign:"center",padding:"16px",color:"#475569",fontSize:"13px"}},"Sin mediciones. Registra la primera abajo.")
         ]),
         card([
           e("div",{style:{fontWeight:"700",marginBottom:"14px"}},"Nueva medicion SOH"),
@@ -611,13 +573,13 @@ function App(){
           e("input",{style:{...iS,marginBottom:"10px"},value:degF.date,onInput:ev=>setDegF(f=>({...f,date:ev.target.value}))}),
           lbl("Condiciones"),
           e("input",{style:{...iS,marginBottom:"12px"},placeholder:"Ej: primavera, autopista",value:degF.notes,onInput:ev=>setDegF(f=>({...f,notes:ev.target.value}))}),
-          degF.range && e("div",{style:{background:"#0f172a",borderRadius:"8px",padding:"10px",marginBottom:"12px",display:"flex",justifyContent:"space-between",fontSize:"13px"}},
+          degF.range&&e("div",{style:{background:"#0f172a",borderRadius:"8px",padding:"10px",marginBottom:"12px",display:"flex",justifyContent:"space-between",fontSize:"13px"}},
             e("span",{style:{color:"#94a3b8"}},"SOH a registrar"),
-            e("span",{style:{fontWeight:"700",color:"#22c55e"}},((+degF.range/RANGE)*100).toFixed(1)+"%")
+            e("span",{style:{fontWeight:"700",color:"#22c55e"}},((+degF.range/RANGE_OFF)*100).toFixed(1)+"%")
           ),
           e("button",{style:{...bP,background:syncing?"#334155":"#3b82f6"},onClick:saveDeg,disabled:syncing},syncing?"Guardando...":"Guardar medicion")
         ]),
-        sohs.length>0 && card([
+        sohs.length>0&&card([
           e("div",{style:{fontWeight:"700",marginBottom:"12px"}},"Historial SOH"),
           sohs.map(d=>e("div",{key:d.id,style:{borderBottom:"1px solid #334155",paddingBottom:"10px",marginBottom:"10px"}},
             e("div",{style:{display:"flex",justifyContent:"space-between"}},
@@ -629,10 +591,7 @@ function App(){
         ])
       ),
 
-      /* ══════════════════════════════
-         PESTAÑA: MAPA CARGADORES
-      ══════════════════════════════ */
-      tab==="map" && e("div",null,
+      tab==="map"&&e("div",null,
         e("div",{style:{fontWeight:"700",fontSize:"15px",marginBottom:"6px"}},"Puntos de carga — C. Valenciana"),
         e("div",{style:{display:"flex",gap:"6px",flexWrap:"wrap",marginBottom:"12px"}},
           [["all","Todos"],["Sueca","Sueca"],["Puzol","Puzol"],["Sagunto","Sagunto"],["Valencia","Valencia"],["ok","Activos"]].map(([id,lbl2])=>
@@ -662,9 +621,9 @@ function App(){
                 ),
                 e("div",{style:{fontSize:"12px",color:"#94a3b8"}},s.addr)
               ),
-              s.rating && e("span",{style:{color:"#f59e0b",fontSize:"12px",fontWeight:"600"}},"⭐ "+s.rating)
+              s.rating&&e("span",{style:{color:"#f59e0b",fontSize:"12px",fontWeight:"600"}},"⭐ "+s.rating)
             ),
-            selSt?.name===s.name && e("div",{style:{marginTop:"12px",borderTop:"1px solid #334155",paddingTop:"12px"}},
+            selSt?.name===s.name&&e("div",{style:{marginTop:"12px",borderTop:"1px solid #334155",paddingTop:"12px"}},
               row("Conectores",s.conn),
               row("Notas",s.notes),
               e("a",{href:`https://www.google.com/maps/search/?api=1&query=${s.lat},${s.lng}`,target:"_blank",rel:"noopener noreferrer",style:{display:"block",background:"#3b82f6",color:"#fff",borderRadius:"8px",padding:"10px",textAlign:"center",fontWeight:"700",fontSize:"13px",textDecoration:"none",marginTop:"12px"}},"Abrir en Google Maps")
@@ -673,10 +632,7 @@ function App(){
         )
       ),
 
-      /* ══════════════════════════════
-         PESTAÑA: IA ADVISOR
-      ══════════════════════════════ */
-      tab==="advisor" && e("div",{style:{display:"flex",flexDirection:"column",height:"calc(100vh - 210px)"}},
+      tab==="advisor"&&e("div",{style:{display:"flex",flexDirection:"column",height:"calc(100vh - 210px)"}},
         card([
           e("div",{style:{fontWeight:"700",fontSize:"14px",marginBottom:"4px"}},"Smart Advisor — e-up! 2014"),
           e("div",{style:{color:"#94a3b8",fontSize:"12px"}},"Analiza tus datos reales de Google Sheets.")
@@ -690,7 +646,7 @@ function App(){
           aiMsgs.map((m,i)=>e("div",{key:i,style:{display:"flex",justifyContent:m.r==="u"?"flex-end":"flex-start"}},
             e("div",{style:{maxWidth:"85%",padding:"10px 14px",borderRadius:m.r==="u"?"16px 16px 4px 16px":"16px 16px 16px 4px",background:m.r==="u"?"#3b82f6":"#1e293b",fontSize:"13px",lineHeight:"1.6"}},m.t)
           )),
-          aiLoad && e("div",{style:{display:"flex"}},e("div",{style:{background:"#1e293b",padding:"10px 14px",borderRadius:"16px 16px 16px 4px",fontSize:"13px",color:"#94a3b8"}},"Analizando..."))
+          aiLoad&&e("div",{style:{display:"flex"}},e("div",{style:{background:"#1e293b",padding:"10px 14px",borderRadius:"16px 16px 16px 4px",fontSize:"13px",color:"#94a3b8"}},"Analizando..."))
         ),
         e("div",{style:{display:"flex",gap:"8px"}},
           e("input",{style:{...iS,flex:"1"},placeholder:"Pregunta sobre tu vehiculo...",value:aiIn,onInput:ev=>setAiIn(ev.target.value),onKeyDown:ev=>ev.key==="Enter"&&sendAI()}),
@@ -698,10 +654,7 @@ function App(){
         )
       ),
 
-      /* ══════════════════════════════
-         PESTAÑA: STATS
-      ══════════════════════════════ */
-      tab==="stats" && e("div",null,
+      tab==="stats"&&e("div",null,
         e("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"10px",marginBottom:"14px"}},
           [["Registros",regs.length,"#3b82f6"],["Km totales",regs.reduce((s,l)=>s+(+l.km),0)+" km","#22c55e"],["En ECO",regs.filter(l=>l.modo==="eco").length,"#22c55e"],["SOH",soh?soh+"%":"--",soh?sC:"#475569"]].map(([l,v,c])=>
             e("div",{key:l,style:{background:"#1e293b",borderRadius:"14px",padding:"14px",textAlign:"center"}},
@@ -710,7 +663,7 @@ function App(){
             )
           )
         ),
-        regs.length>0 && card([
+        regs.length>0&&card([
           e("div",{style:{fontWeight:"700",marginBottom:"12px"}},"Consumo por registro"),
           regs.slice(0,10).map(log=>{
             const c=log.consumo>18?"#ef4444":log.consumo>15?"#f59e0b":"#22c55e";
