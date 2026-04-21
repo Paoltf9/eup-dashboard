@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -84,7 +85,6 @@ const SEASONS=[
 ];
 const getSeason=()=>{const m=new Date().getMonth()+1;return SEASONS.find(s=>s.months.includes(m))?.id||"primavera";};
 
-// Categorías mantenimiento específicas e-Up eléctrico
 const MANT_CATS=[
   {id:"neumaticos",    label:"Neumáticos",       icon:"⚫", color:"#f59e0b", km:40000},
   {id:"frenos_past",   label:"Pastillas freno",  icon:"🔴", color:"#ef4444", km:60000},
@@ -105,6 +105,94 @@ async function apiPost(action,data){const r=await fetch(API,{method:"POST",body:
 
 const iS={background:"#0f172a",border:"1px solid #334155",borderRadius:"8px",color:"#f1f5f9",padding:"8px 12px",width:"100%",fontSize:"14px",boxSizing:"border-box"};
 const bP={background:"#3b82f6",color:"#fff",border:"none",borderRadius:"8px",padding:"10px 16px",cursor:"pointer",fontWeight:"600",fontSize:"14px",width:"100%"};
+
+/* ══════════════════════════════════════════
+   HELPERS: cálculo de días sin carga
+══════════════════════════════════════════ */
+
+// Convierte "dd/mm/yyyy" → objeto Date a medianoche
+function parseEsDate(str){
+  if(!str)return null;
+  const p=str.split("/");
+  if(p.length!==3)return null;
+  return new Date(+p[2],+p[1]-1,+p[0]);
+}
+
+// Formatea Date → "dd/mm/yyyy"
+function fmtDate(d){
+  return d.toLocaleDateString("es-ES");
+}
+
+// Dada la lista de registros, calcula:
+//  - rachaSinCarga: días consecutivos sin cargar hasta hoy
+//  - pctMes: % de días del mes en curso donde SÍ se cargó
+//  - diasCargadosMes: número de días únicos cargados este mes
+//  - diasTranscurridos: días transcurridos del mes actual (hasta hoy)
+function calcChargeStats(regs, manualNoCarga){
+  const hoy = new Date();
+  hoy.setHours(0,0,0,0);
+
+  // Construimos un Set de fechas donde SÍ se cargó (carga !== "none")
+  const diasConCarga = new Set();
+  // Y un Set de todas las fechas con registro (para saber que el día "existe")
+  const diasConRegistro = new Set();
+
+  regs.forEach(r => {
+    const d = parseEsDate(r.fecha);
+    if(!d) return;
+    const k = fmtDate(d);
+    diasConRegistro.add(k);
+    if(r.carga && r.carga !== "none"){
+      diasConCarga.add(k);
+    }
+  });
+
+  // Añadimos manualmente días sin carga marcados (para que no cuenten como carga)
+  // manualNoCarga es un array de strings "dd/mm/yyyy"
+  const manualSet = new Set(manualNoCarga || []);
+
+  // ── RACHA SIN CARGA ──
+  // Recorremos hacia atrás desde hoy buscando días consecutivos sin carga
+  let racha = 0;
+  let cursor = new Date(hoy);
+  // Máximo 365 días hacia atrás para no bucle infinito
+  for(let i = 0; i < 365; i++){
+    const k = fmtDate(cursor);
+    const tieneCarga = diasConCarga.has(k) && !manualSet.has(k);
+    if(tieneCarga){
+      // Este día SÍ cargó → racha termina
+      break;
+    } else {
+      // No cargó (o no hay registro, o marcado manual)
+      racha++;
+    }
+    cursor.setDate(cursor.getDate() - 1);
+  }
+  // Restamos 1 porque el día de hoy no ha terminado
+  // Solo si hoy tiene registro de carga no sumamos hoy
+  const hoyK = fmtDate(hoy);
+  if(diasConCarga.has(hoyK) && !manualSet.has(hoyK)){
+    racha = 0;
+  }
+
+  // ── % DÍAS CARGADOS ESTE MES ──
+  const anyo = hoy.getFullYear();
+  const mes  = hoy.getMonth(); // 0-based
+  const diaHoy = hoy.getDate();
+
+  let diasCargadosMes = 0;
+  // Recorremos cada día del mes hasta hoy
+  for(let d = 1; d <= diaHoy; d++){
+    const fecha = new Date(anyo, mes, d);
+    const k = fmtDate(fecha);
+    if(diasConCarga.has(k) && !manualSet.has(k)){
+      diasCargadosMes++;
+    }
+  }
+  const pctMes = diaHoy > 0 ? Math.round((diasCargadosMes / diaHoy) * 100) : 0;
+
+  return { racha, pctMes, diasCargadosMes, diasTranscurridos: diaHoy };
+}
 
 /* ═══════════ PANEL DE INSTRUMENTOS ═══════════ */
 function Panel({bat,regs,sohs}){
@@ -205,6 +293,170 @@ function Panel({bat,regs,sohs}){
   );
 }
 
+/* ═══════════ BLOQUE INDICADOR DÍAS SIN CARGA ═══════════ */
+function ChargingHealthBlock({regs, manualNoCarga, onAddManual, onRemoveManual, syncing}){
+  const [showManual, setShowManual] = useState(false);
+  const [manualDate, setManualDate] = useState(tod());
+
+  const { racha, pctMes, diasCargadosMes, diasTranscurridos } = calcChargeStats(regs, manualNoCarga);
+
+  // Color según racha
+  const rachaColor = racha === 0 ? "#22c55e" : racha <= 2 ? "#f59e0b" : "#ef4444";
+  const rachaIcon  = racha === 0 ? "✅" : racha <= 2 ? "⚠️" : "🔴";
+  const rachaMsg   = racha === 0
+    ? "Cargaste hoy, ¡perfecto!"
+    : racha === 1
+    ? "Ayer no cargaste — sin problema"
+    : racha <= 3
+    ? "Llevas "+racha+" días sin cargar — carga pronto"
+    : "¡"+racha+" días sin cargar! Puede afectar la batería";
+
+  // Color según % mes
+  const pctColor = pctMes >= 70 ? "#22c55e" : pctMes >= 40 ? "#f59e0b" : "#ef4444";
+  const pctMsg   = pctMes >= 70
+    ? "Buen hábito de carga este mes"
+    : pctMes >= 40
+    ? "Carga con más frecuencia"
+    : "Carga muy irregular este mes";
+
+  // Mini calendario del mes: cada día del mes hasta hoy
+  const hoy = new Date(); hoy.setHours(0,0,0,0);
+  const anyo = hoy.getFullYear();
+  const mes  = hoy.getMonth();
+  const diaHoy = hoy.getDate();
+  const manualSet = new Set(manualNoCarga || []);
+
+  const diasConCarga = new Set();
+  regs.forEach(r => {
+    if(r.carga && r.carga !== "none"){
+      diasConCarga.add(r.fecha);
+    }
+  });
+
+  const calDays = [];
+  for(let d = 1; d <= diaHoy; d++){
+    const fecha = new Date(anyo, mes, d);
+    const k = fmtDate(fecha);
+    const cargo = diasConCarga.has(k) && !manualSet.has(k);
+    const noCargoManual = manualSet.has(k);
+    calDays.push({ d, k, cargo, noCargoManual });
+  }
+
+  return e("div",{style:{background:"#1e293b",borderRadius:"16px",padding:"18px",marginBottom:"14px"}},
+
+    // Título
+    e("div",{style:{fontWeight:"700",fontSize:"14px",marginBottom:"14px",display:"flex",alignItems:"center",gap:"8px"}},
+      "🔋 Hábitos de carga — salud batería"
+    ),
+
+    // Dos métricas principales
+    e("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"10px",marginBottom:"14px"}},
+
+      // Racha sin carga
+      e("div",{style:{background:"#0f172a",borderRadius:"12px",padding:"14px",textAlign:"center",border:"1px solid #1e293b"}},
+        e("div",{style:{fontSize:"11px",color:"#94a3b8",marginBottom:"6px",textTransform:"uppercase",letterSpacing:"0.5px"}},"Días sin cargar"),
+        e("div",{style:{fontSize:"42px",fontWeight:"800",color:rachaColor,lineHeight:"1"}},racha),
+        e("div",{style:{fontSize:"10px",color:"#475569",marginTop:"2px"}},"días seguidos"),
+        e("div",{style:{marginTop:"8px",fontSize:"10px",padding:"4px 6px",borderRadius:"6px",background:rachaColor+"22",color:rachaColor}},rachaIcon+" "+rachaMsg)
+      ),
+
+      // % mes
+      e("div",{style:{background:"#0f172a",borderRadius:"12px",padding:"14px",textAlign:"center",border:"1px solid #1e293b"}},
+        e("div",{style:{fontSize:"11px",color:"#94a3b8",marginBottom:"6px",textTransform:"uppercase",letterSpacing:"0.5px"}},"Cargado este mes"),
+        e("div",{style:{fontSize:"42px",fontWeight:"800",color:pctColor,lineHeight:"1"}},pctMes+"%"),
+        e("div",{style:{fontSize:"10px",color:"#475569",marginTop:"2px"}},diasCargadosMes+" de "+diasTranscurridos+" días"),
+        e("div",{style:{marginTop:"8px",fontSize:"10px",padding:"4px 6px",borderRadius:"6px",background:pctColor+"22",color:pctColor}},pctMsg)
+      )
+    ),
+
+    // Barra de progreso % mes
+    e("div",{style:{marginBottom:"14px"}},
+      e("div",{style:{display:"flex",justifyContent:"space-between",fontSize:"11px",color:"#94a3b8",marginBottom:"4px"}},
+        e("span",null,"0%"),
+        e("span",null,"Meta: ≥70% días con carga"),
+        e("span",null,"100%")
+      ),
+      e("div",{style:{background:"#0f172a",borderRadius:"8px",height:"10px",overflow:"hidden",position:"relative"}},
+        e("div",{style:{position:"absolute",left:"70%",top:0,bottom:0,width:"2px",background:"#334155",zIndex:1}}),
+        e("div",{style:{width:`${pctMes}%`,height:"100%",background:`linear-gradient(90deg,${pctColor}88,${pctColor})`,borderRadius:"8px",transition:"width .4s"}})
+      )
+    ),
+
+    // Mini calendario del mes
+    calDays.length > 0 && e("div",{style:{marginBottom:"14px"}},
+      e("div",{style:{fontSize:"11px",color:"#94a3b8",marginBottom:"6px"}},"Este mes (cada cuadro = 1 día)"),
+      e("div",{style:{display:"flex",flexWrap:"wrap",gap:"3px"}},
+        calDays.map(({d, cargo, noCargoManual}) =>
+          e("div",{
+            key:d,
+            title:"Día "+d+": "+(cargo?"Cargaste ✅":noCargoManual?"Sin carga (manual)":"Sin carga registrada"),
+            style:{
+              width:"22px",height:"22px",borderRadius:"4px",fontSize:"9px",fontWeight:"700",
+              display:"flex",alignItems:"center",justifyContent:"center",
+              background: cargo ? "#14532d" : noCargoManual ? "#3b1515" : "#1e2535",
+              color: cargo ? "#22c55e" : noCargoManual ? "#ef4444" : "#475569",
+              border: d === diaHoy ? "1px solid #60a5fa" : "1px solid transparent"
+            }
+          },d)
+        )
+      ),
+      e("div",{style:{display:"flex",gap:"12px",marginTop:"6px",flexWrap:"wrap"}},
+        [["#14532d","#22c55e","Día con carga"],["#1e2535","#475569","Sin registro"],["#3b1515","#ef4444","Sin carga (manual)"]].map(([bg,cl,lb])=>
+          e("div",{key:lb,style:{display:"flex",alignItems:"center",gap:"4px",fontSize:"10px",color:"#94a3b8"}},
+            e("div",{style:{width:"10px",height:"10px",borderRadius:"2px",background:bg,border:"1px solid "+cl}}),
+            e("span",null,lb)
+          )
+        )
+      )
+    ),
+
+    // Consejo de salud batería
+    e("div",{style:{background: racha > 4 ? "#2a0a0a" : racha > 1 ? "#2a1f0a" : "#0a1f0a", border:`1px solid ${rachaColor}44`, borderRadius:"10px",padding:"10px 12px",fontSize:"12px",color:rachaColor,marginBottom:"12px",lineHeight:"1.5"}},
+      e("span",{style:{fontWeight:"700"}},"💡 Consejo: "),
+      racha > 4
+        ? "Las baterías de ión-litio se degradan más si se dejan descargadas mucho tiempo. Intenta cargar al menos cada 2-3 días."
+        : racha > 1
+        ? "El e-Up! funciona mejor con cargas frecuentes a niveles medios (20%-80%). No esperes a llegar al mínimo."
+        : "¡Perfecto! Mantener el hábito de carga frecuente prolonga la vida de tu batería de 16 kWh."
+    ),
+
+    // Botón marcar día sin carga manualmente
+    e("div",null,
+      e("button",{
+        onClick:()=>setShowManual(!showManual),
+        style:{background:"transparent",border:"1px solid #334155",borderRadius:"8px",color:"#94a3b8",fontSize:"12px",padding:"7px 12px",cursor:"pointer",width:"100%",textAlign:"left"}
+      },(showManual?"▲ ":"▼ ")+"Marcar día sin carga manualmente"),
+
+      showManual && e("div",{style:{marginTop:"10px",display:"flex",gap:"8px",alignItems:"center"}},
+        e("input",{
+          style:{...iS,flex:1,fontSize:"13px"},
+          value:manualDate,
+          onInput:ev=>setManualDate(ev.target.value),
+          placeholder:"dd/mm/aaaa"
+        }),
+        e("button",{
+          onClick:()=>{ if(manualDate){ onAddManual(manualDate); setManualDate(tod()); setShowManual(false); } },
+          disabled:syncing,
+          style:{background:"#ef4444",color:"#fff",border:"none",borderRadius:"8px",padding:"8px 14px",cursor:"pointer",fontWeight:"600",fontSize:"13px",whiteSpace:"nowrap"}
+        },"Añadir")
+      ),
+
+      // Lista de días manuales
+      manualNoCarga && manualNoCarga.length > 0 && e("div",{style:{marginTop:"10px"}},
+        e("div",{style:{fontSize:"11px",color:"#94a3b8",marginBottom:"6px"}},"Días marcados manualmente sin carga:"),
+        e("div",{style:{display:"flex",flexWrap:"wrap",gap:"5px"}},
+          manualNoCarga.map(fecha =>
+            e("div",{key:fecha,style:{background:"#3b1515",border:"1px solid #ef444433",borderRadius:"6px",padding:"3px 8px",fontSize:"11px",color:"#fca5a5",display:"flex",alignItems:"center",gap:"5px"}},
+              e("span",null,fecha),
+              e("button",{onClick:()=>onRemoveManual(fecha),style:{background:"none",border:"none",color:"#ef4444",cursor:"pointer",fontSize:"12px",padding:"0",lineHeight:"1"}},"✕")
+            )
+          )
+        )
+      )
+    )
+  );
+}
+
 /* ═══════════ APP PRINCIPAL ═══════════ */
 function App(){
   const [regs,setRegs]=useState([]);
@@ -217,6 +469,27 @@ function App(){
   const [dayF,setDayF]=useState({date:tod(),s:"",e:"",km:"",mode:"eco",loc:"none",season:getSeason()});
   const [editId,setEditId]=useState(null);
   const [degF,setDegF]=useState({range:"",date:tod(),notes:""});
+
+  // Días sin carga manuales (se guardan en localStorage como fallback local)
+  const [manualNoCarga,setManualNoCarga]=useState(()=>{
+    try{ return JSON.parse(localStorage.getItem("manual_no_carga")||"[]"); }catch{return [];}
+  });
+
+  const addManualNoCarga = (fecha) => {
+    setManualNoCarga(prev => {
+      if(prev.includes(fecha)) return prev;
+      const next = [...prev, fecha];
+      try{ localStorage.setItem("manual_no_carga", JSON.stringify(next)); }catch{}
+      return next;
+    });
+  };
+  const removeManualNoCarga = (fecha) => {
+    setManualNoCarga(prev => {
+      const next = prev.filter(f => f !== fecha);
+      try{ localStorage.setItem("manual_no_carga", JSON.stringify(next)); }catch{}
+      return next;
+    });
+  };
 
   // Mantenimiento
   const [mants,setMants]=useState([]);
@@ -320,7 +593,8 @@ function App(){
     setAiMsgs(msgs);setAiLoad(true);
     const ac=regs.length?(regs.reduce((s,l)=>s+(+l.consumo),0)/regs.length).toFixed(1):"15.5";
     const ld2=sohs[0];
-    const sys=`Eres experto en VE y asistente del VW e-up! 2014 de Paola. DATOS: Bateria 16kWh | Autonomia 133km | SOH:${ld2?ld2.soh+"%":"no medido"} | Consumo:${ac}kWh/100km | Bateria actual:${bat}% | Registros:${regs.length} | Km:${regs.reduce((s,l)=>s+(+l.km),0)} | Uso:120km/dia L-V | Zona Puzol-Valencia. Responde en espanol, max 3 parrafos cortos.`;
+    const {racha,pctMes}=calcChargeStats(regs,manualNoCarga);
+    const sys=`Eres experto en VE y asistente del VW e-up! 2014 de Paola. DATOS: Bateria 16kWh | Autonomia 133km | SOH:${ld2?ld2.soh+"%":"no medido"} | Consumo:${ac}kWh/100km | Bateria actual:${bat}% | Registros:${regs.length} | Km:${regs.reduce((s,l)=>s+(+l.km),0)} | Dias sin cargar seguidos:${racha} | % dias cargados este mes:${pctMes}% | Uso:120km/dia L-V | Zona Puzol-Valencia. Responde en espanol, max 3 parrafos cortos.`;
     try{
       const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,system:sys,messages:msgs.map(m=>({role:m.r==="u"?"user":"assistant",content:m.t}))})});
       const d=await r.json();
@@ -489,6 +763,16 @@ function App(){
 
       /* ── BATERÍA SOH ── */
       tab==="battery"&&e("div",null,
+
+        // ── NUEVO: Indicador hábitos de carga ──
+        e(ChargingHealthBlock,{
+          regs,
+          manualNoCarga,
+          onAddManual: addManualNoCarga,
+          onRemoveManual: removeManualNoCarga,
+          syncing
+        }),
+
         card([
           e("div",{style:{fontWeight:"700",marginBottom:"6px"}},"Salud de la bateria (SOH)"),
           e("div",{style:{color:"#94a3b8",fontSize:"12px",marginBottom:"14px"}},"Carga al 100% y anota cuantos km reales alcanzas hasta llegar a 0%."),
@@ -532,8 +816,6 @@ function App(){
 
       /* ── MANTENIMIENTO ── */
       tab==="mant"&&e("div",null,
-
-        // Resumen
         e("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"8px",marginBottom:"14px"}},
           e("div",{style:{background:"#1e293b",borderRadius:"14px",padding:"14px",textAlign:"center"}},
             e("div",{style:{color:"#94a3b8",fontSize:"11px",marginBottom:"4px"}},"Total registros"),
@@ -544,15 +826,11 @@ function App(){
             e("div",{style:{fontSize:"22px",fontWeight:"700",color:"#f59e0b"}},mants.reduce((s,m)=>s+(+m.coste||0),0).toFixed(0)+" €")
           )
         ),
-
-        // Filtro categorías
         e("div",{style:{display:"flex",gap:"6px",overflowX:"auto",paddingBottom:"6px",marginBottom:"14px"}},
           [{id:"todas",label:"Todas",icon:"🔧",color:"#3b82f6"},...MANT_CATS].map(c=>
             e("button",{key:c.id,onClick:()=>setMantCat(c.id),style:{flexShrink:0,padding:"5px 11px",borderRadius:"20px",border:"1px solid "+(mantCat===c.id?c.color:"#334155"),background:mantCat===c.id?c.color+"22":"transparent",color:mantCat===c.id?c.color:"#94a3b8",cursor:"pointer",fontSize:"11px",fontWeight:"600",whiteSpace:"nowrap"}},c.icon+" "+c.label)
           )
         ),
-
-        // Formulario
         card([
           e("div",{style:{fontWeight:"700",marginBottom:"14px",fontSize:"14px"}},mantEdit?"✏️ Editando registro":"➕ Nuevo mantenimiento"),
           lbl("Tipo de mantenimiento"),
@@ -577,8 +855,6 @@ function App(){
             mantEdit&&e("button",{onClick:()=>{setMantEdit(null);setMantF({cat:"neumaticos",fecha:tod(),km:"",taller:"",coste:"",notas:"",prox_km:"",prox_fecha:""});},style:{...bP,background:"#334155",width:"auto",padding:"10px 14px"}},"✕")
           )
         ]),
-
-        // Historial
         (()=>{
           const filtrados=mantCat==="todas"?mants:mants.filter(m=>m.categoria===mantCat);
           if(filtrados.length===0)return e("div",{style:{textAlign:"center",color:"#475569",padding:"24px",fontSize:"13px"}},"Sin registros aún.");
@@ -615,29 +891,17 @@ function App(){
 
       /* ── CARGADORES ── */
       tab==="map"&&e("div",null,
-
-        // Header + botón añadir
         e("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"12px"}},
           e("div",{style:{fontWeight:"700",fontSize:"15px"}},"Puntos de carga"),
           e("button",{onClick:()=>{setShowCargForm(!showCargForm);setCargEdit(null);setCargF({nombre:"",direccion:"",zona:"Puzol",red:"Iberdrola",conectores:"Type 2, CCS",potencia:"22 kW",notas:"",lat:"",lng:""});},style:{background:"#22c55e22",border:"1px solid #22c55e44",borderRadius:"8px",color:"#22c55e",fontSize:"12px",padding:"6px 12px",cursor:"pointer",fontWeight:"600"}},showCargForm?"✕ Cancelar":"➕ Añadir")
         ),
-
-        // Formulario añadir/editar cargador
         showCargForm&&card([
           e("div",{style:{fontWeight:"700",marginBottom:"14px",fontSize:"14px"}},cargEdit?"✏️ Editando cargador":"➕ Nuevo punto de carga"),
           lbl("Nombre"),e("input",{style:{...iS,marginBottom:"10px"},placeholder:"Ej: Iberdrola bp pulse Mercadona",value:cargF.nombre,onInput:ev=>setCargF(f=>({...f,nombre:ev.target.value}))}),
           lbl("Dirección"),e("input",{style:{...iS,marginBottom:"10px"},placeholder:"Ej: Av. de la Constitución 12, Puzol",value:cargF.direccion,onInput:ev=>setCargF(f=>({...f,direccion:ev.target.value}))}),
           e("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"10px",marginBottom:"10px"}},
-            e("div",null,lbl("Zona"),
-              e("select",{style:iS,value:cargF.zona,onInput:ev=>setCargF(f=>({...f,zona:ev.target.value}))},
-                ZONAS.map(z=>e("option",{key:z,value:z},z))
-              )
-            ),
-            e("div",null,lbl("Red / Operador"),
-              e("select",{style:iS,value:cargF.red,onInput:ev=>setCargF(f=>({...f,red:ev.target.value}))},
-                REDES.map(r=>e("option",{key:r,value:r},r))
-              )
-            )
+            e("div",null,lbl("Zona"),e("select",{style:iS,value:cargF.zona,onInput:ev=>setCargF(f=>({...f,zona:ev.target.value}))},ZONAS.map(z=>e("option",{key:z,value:z},z)))),
+            e("div",null,lbl("Red / Operador"),e("select",{style:iS,value:cargF.red,onInput:ev=>setCargF(f=>({...f,red:ev.target.value}))},REDES.map(r=>e("option",{key:r,value:r},r))))
           ),
           e("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"10px",marginBottom:"10px"}},
             e("div",null,lbl("Conectores"),e("input",{style:iS,placeholder:"Type 2, CCS",value:cargF.conectores,onInput:ev=>setCargF(f=>({...f,conectores:ev.target.value}))})),
@@ -650,16 +914,10 @@ function App(){
           ),
           e("button",{style:{...bP,background:syncing?"#334155":"#22c55e"},onClick:saveCarg,disabled:syncing},syncing?"Guardando...":"Guardar cargador")
         ]),
-
-        // Botón ver en Electromaps
         e("a",{href:"https://map.electromaps.com/es/?lat=39.62&lng=-0.35&zoom=11",target:"_blank",rel:"noopener noreferrer",style:{display:"block",background:"#3b82f622",border:"1px solid #3b82f644",borderRadius:"10px",padding:"10px 14px",textAlign:"center",color:"#4a9eff",fontSize:"12px",fontWeight:"600",textDecoration:"none",marginBottom:"14px"}},"🗺️ Ver todos los cargadores en Electromaps →"),
-
-        // Filtro zonas
         e("div",{style:{display:"flex",gap:"6px",overflowX:"auto",paddingBottom:"4px",marginBottom:"12px"}},
           ["todas",...ZONAS].map(z=>e("button",{key:z,onClick:()=>setCargZona(z),style:{flexShrink:0,padding:"5px 12px",borderRadius:"20px",border:"1px solid "+(cargZona===z?"#3b82f6":"#334155"),background:cargZona===z?"#3b82f622":"transparent",color:cargZona===z?"#4a9eff":"#94a3b8",cursor:"pointer",fontSize:"11px",fontWeight:"600",whiteSpace:"nowrap"}},z==="todas"?"Todos":z))
         ),
-
-        // Lista cargadores
         (()=>{
           const filtrados=cargZona==="todas"?cargadores:cargadores.filter(c=>c.zona===cargZona);
           if(filtrados.length===0)return e("div",{style:{textAlign:"center",color:"#475569",padding:"24px",fontSize:"13px"}},"Sin cargadores en esta zona.");
